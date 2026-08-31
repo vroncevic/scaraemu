@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Coverage databases and reports
+.coverage
+.coverage.*
+*.json
+*.xml
+*.report
+htmlcov/

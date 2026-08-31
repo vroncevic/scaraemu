@@ -1,0 +1,3 @@
+include py.typed
+global-exclude *.py[cod]
+global-exclude *.editorconfig

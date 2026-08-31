@@ -1,0 +1,13 @@
+[run]
+branch = True
+
+[report]
+exclude_lines =
+    pragma: no cover
+    pass
+    \.\.\.
+    raise NotImplementedError
+    @abstractmethod
+    @abc.abstractmethod
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
