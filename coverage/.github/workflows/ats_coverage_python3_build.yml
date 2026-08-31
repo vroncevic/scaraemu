@@ -1,0 +1,40 @@
+name: ats_coverage_python3_build
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ats_coverage.py'
+      - 'ats_updater.py'
+      - 'MANIFEST.in'
+      - 'pyproject.toml'
+      - 'setup.py'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ats_coverage.py'
+      - 'ats_updater.py'
+      - 'MANIFEST.in'
+      - 'pyproject.toml'
+      - 'setup.py'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up python3
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade setuptools
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade build
+        python3 -m pip install --upgrade wheel
+        pip3 install -r requirements.txt
+    - name: Build python3 package
+      run: |
+        python3 -m build -s --no-isolation --wheel
+    - name: Build python3 package setup
+      run: |
+        python3 setup.py sdist bdist_wheel

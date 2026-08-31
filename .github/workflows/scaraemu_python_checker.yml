@@ -1,0 +1,28 @@
+name: scaraemu_python_checker
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'scaraemu/**/*.py'
+      - 'setup.py'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'scaraemu/**/*.py'
+      - 'setup.py'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Check module length and line limits
+        run: |
+          python3 gates/gates/limits_checker.py scaraemu
