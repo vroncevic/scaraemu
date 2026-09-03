@@ -30,7 +30,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -95,20 +95,66 @@ class ProtocolParser:
             :return: Decoded FirmwareResponseDTO.
             :exceptions: None.
         '''
-        is_nack: bool = 'NACK' in clean_line or 'BUFFER_FULL' in clean_line
-        resp_type: str = 'BUFFER_FULL' if 'BUFFER_FULL' in clean_line else ('NACK' if is_nack else 'ACK')
-        if 'MOVE_DONE' in clean_line:
-            resp_type = 'MOVE_DONE'
-        elif 'MOVE_START' in clean_line:
-            resp_type = 'MOVE_START'
+        inner: str = clean_line.strip('<>')
+        resp_body: str = inner[5:] if inner.startswith('RESP:') else inner
+        parts: list[str] = resp_body.split('#')
+        primary_token: str = parts[0] if parts else ''
+        secondary_token: str = parts[1] if len(parts) > 1 else ''
+
+        match (primary_token, secondary_token):
+            case ('MOVE_DONE', _):
+                resp_type: str = 'MOVE_DONE'
+            case ('MOVE_FAILED', _):
+                resp_type = 'MOVE_FAILED'
+            case ('MOVE_START', _):
+                resp_type = 'MOVE_START'
+            case ('HOMED_SUCCESS', _):
+                resp_type = 'HOMED_SUCCESS'
+            case ('HOMING_IN_PROGRESS', _):
+                resp_type = 'HOMING_IN_PROGRESS'
+            case ('HOMING_FAILED', _):
+                resp_type = 'HOMING_FAILED'
+            case ('FEED_HOLD_ACTIVE', _) | ('ACK', 'FEED_HOLD_ACTIVE'):
+                resp_type = 'FEED_HOLD_ACTIVE'
+            case ('MOTION_RESUMED', _) | ('ACK', 'MOTION_RESUMED'):
+                resp_type = 'MOTION_RESUMED'
+            case ('NACK_SINGULARITY_LIMIT', _):
+                resp_type = 'NACK_SINGULARITY'
+            case ('NACK_JOINT_LIMIT', _):
+                resp_type = 'NACK_JOINT_LIMIT'
+            case ('NACK_Z_OUT_OF_BOUNDS', _):
+                resp_type = 'NACK_Z_LIMIT'
+            case ('NACK_PATH_CROSSES_DEADZONE', _):
+                resp_type = 'NACK_PATH_CROSSES_DEADZONE'
+            case ('ELBOW', _):
+                resp_type = 'ELBOW'
+            case ('ACK', _) if 'ELBOW' in secondary_token:
+                resp_type = 'ELBOW'
+            case (tok, _) if 'BUFFER_FULL' in tok:
+                resp_type = 'BUFFER_FULL'
+            case (tok, _) if 'NACK' in tok:
+                resp_type = 'NACK'
+            case _:
+                resp_type = 'ACK'
 
         payload: dict[str, object] = {'message': clean_line}
-        if 'QUEUE=' in clean_line:
-            try:
-                q_str = clean_line.split('QUEUE=', 1)[1].split('>')[0].split('#')[0]
-                payload['queue_depth'] = int(q_str)
-            except (ValueError, IndexError):
-                pass
+        for part in parts:
+            if '=' in part:
+                k, v = part.split('=', 1)
+                k_lower: str = k.strip().lower()
+                try:
+                    payload[k_lower] = float(v.strip())
+                except ValueError:
+                    payload[k_lower] = v.strip()
+
+        if 'queue' in payload and isinstance(payload['queue'], (int, float)):
+            payload['queue_depth'] = int(payload['queue'])
+
+        is_nack: bool = (
+            'NACK' in clean_line
+            or 'BUFFER_FULL' in clean_line
+            or resp_type in ('HOMING_FAILED', 'MOVE_FAILED')
+        )
 
         return FirmwareResponseDTO(
             raw_line=clean_line,

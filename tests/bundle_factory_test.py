@@ -29,7 +29,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -40,7 +40,7 @@ class TestBundleFactory(unittest.TestCase):
 
     def test_factory_version(self) -> None:
         '''Tests version reporting.'''
-        self.assertEqual(SCARAEmuBundleFactory.get_version(), '1.0.0')
+        self.assertEqual(SCARAEmuBundleFactory.get_version(), '1.0.1')
 
     def test_resolve_geometry_defaults(self) -> None:
         '''Tests dynamic geometry resolution with options fallback.'''

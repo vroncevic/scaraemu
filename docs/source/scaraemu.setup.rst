@@ -4,77 +4,18 @@ scaraemu.setup package
 Submodules
 ----------
 
-scaraemu.setup.bundle module
-----------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: scaraemu.setup.bundle
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.dep\_validator module
-------------------------------------
-
-.. automodule:: scaraemu.setup.dep_validator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.dependencies module
-----------------------------------
-
-.. automodule:: scaraemu.setup.dependencies
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.factory module
------------------------------
-
-.. automodule:: scaraemu.setup.factory
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.keys module
---------------------------
-
-.. automodule:: scaraemu.setup.keys
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.opt\_validator module
-------------------------------------
-
-.. automodule:: scaraemu.setup.opt_validator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.options module
------------------------------
-
-.. automodule:: scaraemu.setup.options
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.registry module
-------------------------------
-
-.. automodule:: scaraemu.setup.registry
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scaraemu.setup.validator module
--------------------------------
-
-.. automodule:: scaraemu.setup.validator
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   scaraemu.setup.bundle
+   scaraemu.setup.dep_validator
+   scaraemu.setup.dependencies
+   scaraemu.setup.factory
+   scaraemu.setup.keys
+   scaraemu.setup.opt_validator
+   scaraemu.setup.options
+   scaraemu.setup.registry
+   scaraemu.setup.validator
 
 Module contents
 ---------------
@@ -83,3 +24,4 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

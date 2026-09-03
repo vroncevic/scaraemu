@@ -34,7 +34,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -62,6 +62,8 @@ class HardwareBridgeController:
                 | send_hardware_move - Sends point move packet to microcontroller.
                 | enqueue_hardware_trajectory - Enqueues multiple waypoints for streaming.
                 | clear_queue - Flushes pending host queue and resets flow control.
+                | send_hardware_hold - Sends feed-hold pause command to hardware.
+                | send_hardware_resume - Sends motion resume command to hardware.
                 | on_serial_line_received - Processes incoming serial text line.
                 | on_serial_log - Logs transport diagnostic messages.
                 | _pump_queue - Streams queued packets within safe flow control window.
@@ -71,17 +73,20 @@ class HardwareBridgeController:
 
     _transport: Final[ITransport]
     _pending_queue: deque[ScaraPose]
-    _in_flight_count: int
+    _firmware_queue_depth: int
+    _unacked_sent_count: int
     _on_state_change: Callable[[bool], None] | None
     _on_telemetry: Callable[[ScaraPose], None] | None
     _on_log_append: Callable[[str, str], None] | None
+    _on_elbow_change: Callable[[bool], None] | None
 
     def __init__(
         self,
         transport: ITransport,
         on_state_change: Callable[[bool], None] | None = None,
         on_telemetry: Callable[[ScaraPose], None] | None = None,
-        on_log_append: Callable[[str, str], None] | None = None
+        on_log_append: Callable[[str, str], None] | None = None,
+        on_elbow_change: Callable[[bool], None] | None = None
     ) -> None:
         '''
             Initializes hardware bridge controller.
@@ -90,14 +95,17 @@ class HardwareBridgeController:
             :param on_state_change: Status change callback.
             :param on_telemetry: Hardware telemetry pose callback.
             :param on_log_append: Log output callback.
+            :param on_elbow_change: Hardware elbow mode callback.
             :exceptions: None.
         '''
         self._transport = transport
         self._pending_queue = deque()
-        self._in_flight_count = 0
+        self._firmware_queue_depth = 0
+        self._unacked_sent_count = 0
         self._on_state_change = on_state_change
         self._on_telemetry = on_telemetry
         self._on_log_append = on_log_append
+        self._on_elbow_change = on_elbow_change
 
         self._transport.set_callbacks(
             on_line=self.on_serial_line_received,
@@ -174,7 +182,26 @@ class HardwareBridgeController:
             :exceptions: None.
         '''
         self._pending_queue.clear()
-        self._in_flight_count = 0
+        self._firmware_queue_depth = 0
+        self._unacked_sent_count = 0
+
+    def send_hardware_hold(self) -> None:
+        '''
+            Sends feed-hold pause command to hardware microcontroller.
+
+            :exceptions: None.
+        '''
+        if self._transport.is_connected():
+            self.handle_manual_send(CommandFormatter.format_hold())
+
+    def send_hardware_resume(self) -> None:
+        '''
+            Sends motion resume command to hardware microcontroller.
+
+            :exceptions: None.
+        '''
+        if self._transport.is_connected():
+            self.handle_manual_send(CommandFormatter.format_resume())
 
     def _pump_queue(self) -> None:
         '''
@@ -185,11 +212,16 @@ class HardwareBridgeController:
         if not self._transport.is_connected():
             return
 
-        while self._pending_queue and self._in_flight_count < self.MAX_IN_FLIGHT:
+        while (
+            self._pending_queue
+            and (self._firmware_queue_depth + self._unacked_sent_count) < self.MAX_IN_FLIGHT
+        ):
             pose = self._pending_queue.popleft()
             packet = CommandFormatter.format_move_pose(pose)
             self._transport.write_line(packet)
-            self._in_flight_count += 1
+            self._unacked_sent_count += 1
+            if self._on_log_append is not None:
+                self._on_log_append(f'TX > {packet}', 'tx')
 
     def on_serial_line_received(self, line: str) -> None:
         '''
@@ -203,17 +235,29 @@ class HardwareBridgeController:
             tag = 'rx' if resp.is_success else 'err'
             self._on_log_append(f'RX < {line}', tag)
 
+        if (
+            resp.response_type in ('ACK', 'NACK', 'BUFFER_FULL')
+            or resp.raw_line.startswith(('<RESP:ACK', '<RESP:NACK'))
+        ):
+            if self._unacked_sent_count > 0:
+                self._unacked_sent_count -= 1
+
         if resp.payload and 'queue_depth' in resp.payload:
-            self._in_flight_count = int(resp.payload['queue_depth'])
+            self._firmware_queue_depth = int(resp.payload['queue_depth'])
             self._pump_queue()
         elif resp.response_type == 'BUFFER_FULL':
-            self._in_flight_count = self.MAX_IN_FLIGHT
-        elif resp.response_type == 'MOVE_DONE':
-            if self._in_flight_count > 0:
-                self._in_flight_count -= 1
+            self._firmware_queue_depth = self.MAX_IN_FLIGHT
+        elif resp.response_type in ('MOVE_DONE', 'MOVE_FAILED') or not resp.is_success:
+            if self._firmware_queue_depth > 0:
+                self._firmware_queue_depth -= 1
+            elif self._unacked_sent_count > 0:
+                self._unacked_sent_count -= 1
             self._pump_queue()
 
-        if resp.response_type == 'TELEM' and self._on_telemetry is not None:
+        if (
+            resp.response_type in ('TELEM', 'MOVE_DONE', 'HOMED_SUCCESS')
+            and self._on_telemetry is not None
+        ):
             payload = resp.payload
             if 'x' in payload and 'y' in payload and 'z' in payload:
                 try:
@@ -227,6 +271,11 @@ class HardwareBridgeController:
                 except (ValueError, TypeError):
                     pass
 
+        if resp.response_type == 'ELBOW' and self._on_elbow_change is not None:
+            val = resp.payload.get('elbow') or resp.payload.get('config')
+            if isinstance(val, str):
+                self._on_elbow_change(val.upper() == 'LEFT')
+
     def on_serial_log(self, message: str) -> None:
         '''
             Logs transport diagnostic messages.
@@ -235,4 +284,6 @@ class HardwareBridgeController:
             :exceptions: None.
         '''
         if self._on_log_append is not None:
-            self._on_log_append(f'[HOST]: {message}', 'host')
+            tag = 'err' if message.startswith('[ERR]') else 'host'
+            log_msg = message if message.startswith(('[HOST]:', '[ERR]:')) else f'[HOST]: {message}'
+            self._on_log_append(log_msg, tag)

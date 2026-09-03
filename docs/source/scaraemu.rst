@@ -13,13 +13,10 @@ Subpackages
 Submodules
 ----------
 
-scaraemu.engine module
-----------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: scaraemu.engine
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   scaraemu.engine
 
 Module contents
 ---------------
@@ -28,3 +25,4 @@ Module contents
    :members:
    :undoc-members:
    :show-inheritance:
+   :private-members:

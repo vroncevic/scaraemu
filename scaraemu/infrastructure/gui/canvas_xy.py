@@ -21,8 +21,8 @@ Info
 
 from __future__ import annotations
 
-import math
-import tkinter as tk
+from math import cos, sin, sqrt, degrees, pi, asin
+from tkinter import Canvas, Misc, Event, Widget, ROUND, LAST
 from collections.abc import Sequence
 from typing import Callable
 
@@ -36,13 +36,13 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class CanvasXY(tk.Canvas, ICanvasXY):
+class CanvasXY(Canvas, ICanvasXY):
     '''
         Top-down 2D XY planar SCARA kinematics visualizer canvas.
 
@@ -72,7 +72,7 @@ class CanvasXY(tk.Canvas, ICanvasXY):
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Widget,
         geometry: ScaraGeometry,
         width: int = 480,
         height: int = 480
@@ -114,7 +114,7 @@ class CanvasXY(tk.Canvas, ICanvasXY):
         '''
         self._on_target_click = callback
 
-    def _on_resize(self, event: tk.Event) -> None:
+    def _on_resize(self, event: Event) -> None:
         '''
             Adjusts scale and center point on widget resize.
 
@@ -155,7 +155,7 @@ class CanvasXY(tk.Canvas, ICanvasXY):
         y: float = (self._center_y - sy) / max(0.001, self._scale)
         return x, y
 
-    def _handle_mouse(self, event: tk.Event) -> None:
+    def _handle_mouse(self, event: Event) -> None:
         '''
             Translates mouse interaction to world coordinates and triggers callback.
 
@@ -214,32 +214,39 @@ class CanvasXY(tk.Canvas, ICanvasXY):
         l1: float = self._geometry.l1
         l2: float = self._geometry.l2
 
-        elbow_x: float = l1 * math.cos(q1)
-        elbow_y: float = l1 * math.sin(q1)
+        elbow_x: float = l1 * cos(q1)
+        elbow_y: float = l1 * sin(q1)
         ex, ey = self._world_to_screen(elbow_x, elbow_y)
 
-        wrist_x: float = elbow_x + l2 * math.cos(q1 + q2)
-        wrist_y: float = elbow_y + l2 * math.sin(q1 + q2)
+        wrist_x: float = elbow_x + l2 * cos(q1 + q2)
+        wrist_y: float = elbow_y + l2 * sin(q1 + q2)
         wx, wy = self._world_to_screen(wrist_x, wrist_y)
 
-        self.create_line(bx, by, ex, ey, fill=ThemeManager.ACCENT_CYAN, width=6, capstyle=tk.ROUND)
-        self.create_line(ex, ey, wx, wy, fill=ThemeManager.ACCENT_BLUE, width=5, capstyle=tk.ROUND)
+        self.create_line(bx, by, ex, ey, fill=ThemeManager.ACCENT_CYAN, width=6, capstyle=ROUND)
+        self.create_line(ex, ey, wx, wy, fill=ThemeManager.ACCENT_BLUE, width=5, capstyle=ROUND)
 
         tool_len: float = 20.0
         tool_phi: float = pose.phi
-        tx_end: float = wrist_x + tool_len * math.cos(tool_phi)
-        ty_end: float = wrist_y + tool_len * math.sin(tool_phi)
+        tx_end: float = wrist_x + tool_len * cos(tool_phi)
+        ty_end: float = wrist_y + tool_len * sin(tool_phi)
         tex, tey = self._world_to_screen(tx_end, ty_end)
-        self.create_line(wx, wy, tex, tey, fill=ThemeManager.ACCENT_GREEN, width=3, arrow=tk.LAST)
+        self.create_line(wx, wy, tex, tey, fill=ThemeManager.ACCENT_GREEN, width=3, arrow=LAST)
 
         self.create_oval(bx - 8, by - 8, bx + 8, by + 8, fill='#45475a', outline=ThemeManager.TEXT_PRIMARY, width=2)
         self.create_oval(ex - 6, ey - 6, ex + 6, ey + 6, fill=ThemeManager.ACCENT_CYAN, outline=ThemeManager.TEXT_PRIMARY, width=2)
         self.create_oval(wx - 5, wy - 5, wx + 5, wy + 5, fill=ThemeManager.ACCENT_BLUE, outline=ThemeManager.TEXT_PRIMARY, width=2)
 
+        r_dead_sq: float = (
+            self._geometry.l1 * self._geometry.l1
+            + self._geometry.l2 * self._geometry.l2
+            + 2.0 * self._geometry.l1 * self._geometry.l2 * cos(self._geometry.j2_max_rad)
+        )
+        r_dead: float = sqrt(max(0.0, r_dead_sq))
+
         self.create_text(
             10, 15,
             anchor='w',
-            text=f'XY TOP VIEW  |  Reach: {self._geometry.r_min:.0f} - {self._geometry.r_max:.0f} mm',
+            text=f'XY TOP VIEW  |  Reach: {r_dead:.0f} - {self._geometry.safe_r_max:.0f} mm',
             fill=ThemeManager.TEXT_SECONDARY,
             font=(ThemeManager.FONT_FAMILY, 9, 'bold')
         )
@@ -252,24 +259,145 @@ class CanvasXY(tk.Canvas, ICanvasXY):
         '''
         bx, by = self._world_to_screen(0.0, 0.0)
 
-        self.create_line(0, by, self._width_px, by, fill=ThemeManager.BORDER_COLOR, dash=(1, 3))
-        self.create_line(bx, 0, bx, self._height_px, fill=ThemeManager.BORDER_COLOR, dash=(1, 3))
+        # 1. Shaded unreachable outer background
+        self.create_rectangle(
+            0, 0, self._width_px, self._height_px,
+            fill=ThemeManager.ACCENT_RED,
+            stipple='gray25',
+            outline=''
+        )
 
-        r_max_px: float = self._geometry.r_max * self._scale
+        # 2. Reachable annular disc cutout
+        r_max_px: float = self._geometry.safe_r_max * self._scale
         self.create_oval(
             bx - r_max_px, by - r_max_px,
             bx + r_max_px, by + r_max_px,
+            fill=ThemeManager.BG_CANVAS,
             outline=ThemeManager.ACCENT_CYAN,
             dash=(3, 3),
             width=1.5
         )
 
-        r_min_px: float = self._geometry.r_min * self._scale
-        if r_min_px > 1.0:
-            self.create_oval(
-                bx - r_min_px, by - r_min_px,
-                bx + r_min_px, by + r_min_px,
+        # 3. Inner physical dead zone (unreachable due to elbow fold limit)
+        r_dead_sq: float = (
+            self._geometry.l1 * self._geometry.l1
+            + self._geometry.l2 * self._geometry.l2
+            + 2.0 * self._geometry.l1 * self._geometry.l2 * cos(self._geometry.j2_max_rad)
+        )
+        r_dead: float = sqrt(max(0.0, r_dead_sq))
+        r_dead_px: float = r_dead * self._scale
+
+        self.create_oval(
+            bx - r_dead_px, by - r_dead_px,
+            bx + r_dead_px, by + r_dead_px,
+            fill=ThemeManager.ACCENT_RED,
+            stipple='gray25',
+            outline=ThemeManager.ACCENT_RED,
+            dash=(2, 2),
+            width=1.5
+        )
+
+        self.create_text(
+            bx, by - r_dead_px * 0.45,
+            text=f'DEAD ZONE\n(R < {r_dead:.0f} mm)',
+            fill=ThemeManager.ACCENT_RED,
+            font=(ThemeManager.FONT_FAMILY, 7, 'bold'),
+            justify='center'
+        )
+
+        # 3b. Rear unreachable boundary crescent (Shoulder J1 angle limit +/- 150 deg)
+        j1_max: float = self._geometry.j1_max_rad
+        j1_max_deg: float = degrees(j1_max)
+        if j1_max < pi:
+            l1: float = self._geometry.l1
+            l2: float = self._geometry.l2
+            r_max: float = self._geometry.safe_r_max
+            poly_pts: list[float] = []
+
+            # 1. Outer circle arc from j1_max to 2*pi - j1_max (e.g. 150° to 210°)
+            steps_arc: int = 24
+            start_ang: float = j1_max
+            end_ang: float = 2.0 * pi - j1_max
+            for i in range(steps_arc + 1):
+                ang: float = start_ang + (end_ang - start_ang) * (i / steps_arc)
+                wx: float = r_max * cos(ang)
+                wy: float = r_max * sin(ang)
+                sx, sy = self._world_to_screen(wx, wy)
+                poly_pts.extend((sx, sy))
+
+            # 2. Lower boundary curve: theta1 = -j1_max, theta2 from 0 to theta2_cross
+            sin_target: float = min(1.0, (l1 * sin(j1_max)) / l2)
+            theta2_cross: float = pi - asin(sin_target) - j1_max
+            elbow_neg_x: float = l1 * cos(-j1_max)
+            elbow_neg_y: float = l1 * sin(-j1_max)
+            steps_curve: int = 16
+            for i in range(steps_curve + 1):
+                q2: float = theta2_cross * (i / steps_curve)
+                arm2_ang: float = -j1_max - q2
+                wx = elbow_neg_x + l2 * cos(arm2_ang)
+                wy = elbow_neg_y + l2 * sin(arm2_ang)
+                sx, sy = self._world_to_screen(wx, wy)
+                poly_pts.extend((sx, sy))
+
+            # 3. Upper boundary curve: theta1 = +j1_max, theta2 from theta2_cross down to 0
+            elbow_pos_x: float = l1 * cos(j1_max)
+            elbow_pos_y: float = l1 * sin(j1_max)
+            for i in range(steps_curve, -1, -1):
+                q2 = theta2_cross * (i / steps_curve)
+                arm2_ang = j1_max + q2
+                wx = elbow_pos_x + l2 * cos(arm2_ang)
+                wy = elbow_pos_y + l2 * sin(arm2_ang)
+                sx, sy = self._world_to_screen(wx, wy)
+                poly_pts.extend((sx, sy))
+
+            self.create_polygon(
+                *poly_pts,
+                fill=ThemeManager.ACCENT_RED,
+                stipple='gray25',
                 outline=ThemeManager.ACCENT_RED,
                 dash=(2, 2),
                 width=1.5
             )
+            lbl_x, lbl_y = self._world_to_screen(-r_max + 18.0, 0.0)
+            self.create_text(
+                lbl_x, lbl_y,
+                text=f'J1 LIMIT\n(±{j1_max_deg:.0f}°)',
+                fill=ThemeManager.ACCENT_RED,
+                font=(ThemeManager.FONT_FAMILY, 7, 'bold'),
+                justify='center'
+            )
+
+        # 4. Cartesian axes
+        self.create_line(0, by, self._width_px, by, fill=ThemeManager.BORDER_COLOR, dash=(1, 3))
+        self.create_line(bx, 0, bx, self._height_px, fill=ThemeManager.BORDER_COLOR, dash=(1, 3))
+
+    def flash_unreachable(self, x: float, y: float) -> None:
+        '''
+            Renders a temporary warning indicator at unreachable target coordinates.
+
+            :param x: Target X in mm.
+            :param y: Target Y in mm.
+            :exceptions: None.
+        '''
+        sx, sy = self._world_to_screen(x, y)
+        tag: str = f'unreachable_{id(self)}'
+        self.create_oval(
+            sx - 8, sy - 8, sx + 8, sy + 8,
+            outline=ThemeManager.ACCENT_RED,
+            width=2,
+            tags=tag
+        )
+        self.create_line(
+            sx - 6, sy - 6, sx + 6, sy + 6,
+            fill=ThemeManager.ACCENT_RED,
+            width=2,
+            tags=tag
+        )
+        self.create_line(
+            sx - 6, sy + 6, sx + 6, sy - 6,
+            fill=ThemeManager.ACCENT_RED,
+            width=2,
+            tags=tag
+        )
+        self.after(600, lambda: self.delete(tag))
+

@@ -30,7 +30,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -52,6 +52,8 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(CommandFormatter.format_get_telemetry(), '<CMD:GET_TELEM>')
         self.assertEqual(CommandFormatter.format_get_position(), '<CMD:GETPOS>')
         self.assertEqual(CommandFormatter.format_get_status(), '<CMD:STATUS>')
+        self.assertEqual(CommandFormatter.format_hold(), '<CMD:HOLD>')
+        self.assertEqual(CommandFormatter.format_resume(), '<CMD:RESUME>')
 
     def test_telemetry_packet_parsing(self) -> None:
         '''Tests decoding incoming positional telemetry packet.'''
@@ -101,6 +103,20 @@ class TestProtocol(unittest.TestCase):
         done_resp = ProtocolParser.parse_line('<RESP:MOVE_DONE#X=180.00#Y=5.00#Z=20.00#PHI=0.00>')
         self.assertEqual(done_resp.response_type, 'MOVE_DONE')
         self.assertTrue(done_resp.is_success)
+        self.assertAlmostEqual(float(done_resp.payload['x']), 180.0)
+        self.assertAlmostEqual(float(done_resp.payload['y']), 5.0)
+
+        homed_resp = ProtocolParser.parse_line('<RESP:HOMED_SUCCESS#X=175.50#Y=0.00#Z=20.00#PHI=0.00>')
+        self.assertEqual(homed_resp.response_type, 'HOMED_SUCCESS')
+        self.assertTrue(homed_resp.is_success)
+        self.assertAlmostEqual(float(homed_resp.payload['x']), 175.5)
+
+        hold_resp = ProtocolParser.parse_line('<RESP:ACK#FEED_HOLD_ACTIVE>')
+        self.assertEqual(hold_resp.response_type, 'FEED_HOLD_ACTIVE')
+
+        sing_resp = ProtocolParser.parse_line('<RESP:NACK_SINGULARITY_LIMIT>')
+        self.assertEqual(sing_resp.response_type, 'NACK_SINGULARITY')
+        self.assertFalse(sing_resp.is_success)
 
         nack_resp = ProtocolParser.parse_line('<RESP:NACK_BUFFER_FULL>')
         self.assertEqual(nack_resp.response_type, 'BUFFER_FULL')

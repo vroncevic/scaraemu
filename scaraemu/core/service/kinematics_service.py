@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-import math
+from math import pi, hypot, sqrt, atan2, cos, sin, degrees, ceil
 from typing import ClassVar
 
 from scaraemu.core.model.scara_geometry import ScaraGeometry
@@ -35,7 +35,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -67,7 +67,7 @@ class KinematicsService(IKinematicsService):
                 | interpolate_linear - Generates fine linear Cartesian waypoints.
     '''
 
-    TWO_PI: ClassVar[float] = 2.0 * math.pi
+    TWO_PI: ClassVar[float] = 2.0 * pi
 
     _geometry: ScaraGeometry
     _config: KinematicsConfigDTO
@@ -135,19 +135,19 @@ class KinematicsService(IKinematicsService):
 
     def is_reachable(self, x: float, y: float) -> bool:
         '''
-            Validates Cartesian horizontal coordinates.
+            Validates Cartesian horizontal coordinates against safe reachable boundaries.
 
             :param x: Target X coordinate in mm.
             :param y: Target Y coordinate in mm.
             :return: True if reachable, False otherwise.
             :exceptions: None.
         '''
-        r: float = math.hypot(x, y)
-        return self._geometry.r_min <= r <= self._geometry.r_max
+        r: float = hypot(x, y)
+        return self._geometry.safe_r_min <= r <= self._geometry.safe_r_max
 
     def solve_ik(self, pose: ScaraPose, elbow_left: bool = False) -> ScaraJoints:
         '''
-            Computes analytical inverse kinematics for the SCARA arm.
+            Computes analytical inverse kinematics for the SCARA arm with safety boundaries.
 
             :param pose: Target Cartesian pose.
             :param elbow_left: True for Lefty / Elbow-Up, False for Righty / Elbow-Down.
@@ -155,9 +155,14 @@ class KinematicsService(IKinematicsService):
             :exceptions: None.
         '''
         r_sq: float = pose.x * pose.x + pose.y * pose.y
-        r: float = math.sqrt(r_sq)
+        r: float = sqrt(r_sq)
 
-        if r > self._geometry.r_max or r < self._geometry.r_min:
+        if (
+            r > self._geometry.safe_r_max
+            or r < self._geometry.safe_r_min
+            or pose.z < self._geometry.z_min
+            or pose.z > self._geometry.z_max
+        ):
             return ScaraJoints(0.0, 0.0, pose.z, 0.0, reachable=False)
 
         l1: float = self._geometry.l1
@@ -166,19 +171,29 @@ class KinematicsService(IKinematicsService):
         cos_q2: float = (r_sq - l1 * l1 - l2 * l2) / (2.0 * l1 * l2)
         cos_q2 = max(-1.0, min(1.0, cos_q2))
 
-        sin_q2: float = math.sqrt(max(0.0, 1.0 - cos_q2 * cos_q2))
+        sin_q2: float = sqrt(max(0.0, 1.0 - cos_q2 * cos_q2))
         if elbow_left:
             sin_q2 = -sin_q2
 
-        theta2: float = math.atan2(sin_q2, cos_q2)
+        theta2: float = atan2(sin_q2, cos_q2)
 
         k1: float = l1 + l2 * cos_q2
         k2: float = l2 * sin_q2
-        theta1: float = math.atan2(pose.y, pose.x) - math.atan2(k2, k1)
+        theta1: float = atan2(pose.y, pose.x) - atan2(k2, k1)
 
         theta1 = self._normalize_angle(theta1)
         theta2 = self._normalize_angle(theta2)
         theta4: float = self._normalize_angle(pose.phi - (theta1 + theta2))
+
+        if (
+            theta1 < self._geometry.j1_min_rad
+            or theta1 > self._geometry.j1_max_rad
+            or theta2 < self._geometry.j2_min_rad
+            or theta2 > self._geometry.j2_max_rad
+            or abs(theta2) < self._geometry.singularity_theta2_min_rad
+            or abs(pi - abs(theta2)) < self._geometry.singularity_theta2_min_rad
+        ):
+            return ScaraJoints(theta1, theta2, pose.z, theta4, reachable=False)
 
         return ScaraJoints(
             theta1=theta1,
@@ -187,6 +202,75 @@ class KinematicsService(IKinematicsService):
             theta4=theta4,
             reachable=True
         )
+
+    def diagnose_reachability(
+        self, pose: ScaraPose, elbow_left: bool = False
+    ) -> tuple[bool, str]:
+        '''
+            Diagnoses why a Cartesian pose is reachable or unreachable.
+
+            :param pose: Target Cartesian pose.
+            :param elbow_left: True for Lefty / Elbow-Up, False for Righty / Elbow-Down.
+            :return: Tuple (is_reachable, detailed_reason).
+            :exceptions: None.
+        '''
+        r: float = hypot(pose.x, pose.y)
+        if r > self._geometry.safe_r_max:
+            return (
+                False,
+                f'Radius R={r:.1f} mm exceeds outer limit R_max={self._geometry.safe_r_max:.1f} mm'
+            )
+        if r < self._geometry.safe_r_min:
+            return (
+                False,
+                f'Radius R={r:.1f} mm is inside deadzone R_min={self._geometry.safe_r_min:.1f} mm'
+            )
+        if pose.z < self._geometry.z_min or pose.z > self._geometry.z_max:
+            return (
+                False,
+                f'Elevation Z={pose.z:.1f} mm is out of range [{self._geometry.z_min:.1f}, {self._geometry.z_max:.1f}] mm'
+            )
+
+        joints: ScaraJoints = self.solve_ik(pose, elbow_left)
+        if joints.reachable:
+            return (True, 'Reachable')
+
+        if (
+            joints.theta1 < self._geometry.j1_min_rad
+            or joints.theta1 > self._geometry.j1_max_rad
+        ):
+            deg1 = degrees(joints.theta1)
+            min_deg = degrees(self._geometry.j1_min_rad)
+            max_deg = degrees(self._geometry.j1_max_rad)
+            return (
+                False,
+                f'Shoulder J1 angle {deg1:.1f}° exceeds limit [{min_deg:.1f}°, {max_deg:.1f}°]'
+            )
+
+        if (
+            joints.theta2 < self._geometry.j2_min_rad
+            or joints.theta2 > self._geometry.j2_max_rad
+        ):
+            deg2 = degrees(joints.theta2)
+            min_deg = degrees(self._geometry.j2_min_rad)
+            max_deg = degrees(self._geometry.j2_max_rad)
+            return (
+                False,
+                f'Elbow J2 angle {deg2:.1f}° exceeds limit [{min_deg:.1f}°, {max_deg:.1f}°]'
+            )
+
+        if abs(joints.theta2) < self._geometry.singularity_theta2_min_rad:
+            deg2 = degrees(abs(joints.theta2))
+            min_deg = degrees(self._geometry.singularity_theta2_min_rad)
+            return (
+                False,
+                f'Elbow J2 angle {deg2:.1f}° is in singularity deadband (< {min_deg:.1f}°)'
+            )
+
+        if abs(pi - abs(joints.theta2)) < self._geometry.singularity_theta2_min_rad:
+            return (False, 'Arm is folded into boundary singularity')
+
+        return (False, 'Unreachable kinematic configuration')
 
     def solve_fk(self, joints: ScaraJoints) -> ScaraPose:
         '''
@@ -201,8 +285,8 @@ class KinematicsService(IKinematicsService):
         l1: float = self._geometry.l1
         l2: float = self._geometry.l2
 
-        x: float = l1 * math.cos(q1) + l2 * math.cos(q1 + q2)
-        y: float = l1 * math.sin(q1) + l2 * math.sin(q1 + q2)
+        x: float = l1 * cos(q1) + l2 * cos(q1 + q2)
+        y: float = l1 * sin(q1) + l2 * sin(q1 + q2)
         phi: float = self._normalize_angle(q1 + q2 + joints.theta4)
 
         return ScaraPose(x=x, y=y, z=joints.z, phi=phi)
@@ -258,11 +342,11 @@ class KinematicsService(IKinematicsService):
         dz: float = end_pose.z - start_pose.z
         dphi: float = end_pose.phi - start_pose.phi
 
-        distance: float = math.sqrt(dx * dx + dy * dy + dz * dz)
+        distance: float = sqrt(dx * dx + dy * dy + dz * dz)
         if distance < 0.001 and abs(dphi) < 0.001:
             return [end_pose]
 
-        num_segments: int = max(1, math.ceil(distance / max(0.01, segment_len_mm)))
+        num_segments: int = max(1, ceil(distance / max(0.01, segment_len_mm)))
         points: list[ScaraPose] = []
 
         for i in range(1, num_segments + 1):
@@ -286,8 +370,8 @@ class KinematicsService(IKinematicsService):
             :return: Normalized angle in radians.
             :exceptions: None.
         '''
-        while angle > math.pi:
+        while angle > pi:
             angle -= self.TWO_PI
-        while angle < -math.pi:
+        while angle < -pi:
             angle += self.TWO_PI
         return angle

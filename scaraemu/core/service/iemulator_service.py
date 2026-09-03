@@ -33,7 +33,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -58,6 +58,7 @@ class IEmulatorService(Protocol):
                 | set_elbow_mode - Toggles elbow orientation mode.
                 | set_motors_enabled - Enables or disables stepper motor drivers.
                 | set_estop - Sets emergency stop state.
+                | set_hold - Sets feed-hold pause state.
                 | set_hardware_connected - Sets hardware bridge connection state.
                 | update_hardware_pose - Updates current robot pose from hardware telemetry.
     '''
@@ -157,6 +158,14 @@ class IEmulatorService(Protocol):
             Sets emergency stop state.
 
             :param active: True to engage E-STOP, False to clear.
+            :exceptions: None.
+        '''
+
+    def set_hold(self, active: bool) -> None:
+        '''
+            Sets feed-hold pause state.
+
+            :param active: True to pause motion queue, False to resume.
             :exceptions: None.
         '''
 

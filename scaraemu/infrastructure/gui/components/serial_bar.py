@@ -27,12 +27,13 @@ from typing import Callable
 
 from scaraemu.infrastructure.gui.theme import ThemeManager
 from scaraemu.infrastructure.communication.serial_port_scanner import SerialPortScanner
+from scaraemu.infrastructure.communication.serial_device_preferences import SerialDevicePreferences
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -97,6 +98,7 @@ class SerialBar(tk.Frame):
 
         self._port_combo = ttk.Combobox(self, width=14, state='readonly')
         self._port_combo.pack(side=tk.LEFT, padx=(0, 5))
+        self._port_combo.bind('<<ComboboxSelected>>', lambda e: self._save_active_pref())
 
         btn_refresh: tk.Button = tk.Button(
             self,
@@ -126,6 +128,7 @@ class SerialBar(tk.Frame):
         )
         self._baud_combo.set('115200')
         self._baud_combo.pack(side=tk.LEFT, padx=(0, 10))
+        self._baud_combo.bind('<<ComboboxSelected>>', lambda e: self._save_active_pref())
 
         self._btn_connect = tk.Button(
             self,
@@ -157,6 +160,8 @@ class SerialBar(tk.Frame):
             :exceptions: None.
         '''
         current_selection: str = self._port_combo.get()
+        saved_port, saved_baud = SerialDevicePreferences.load_preference()
+
         ports = SerialPortScanner.list_ports()
         if not ports:
             ports = ['Virtual / None']
@@ -164,10 +169,29 @@ class SerialBar(tk.Frame):
 
         if current_selection in ports:
             self._port_combo.set(current_selection)
+        elif saved_port and saved_port in ports:
+            self._port_combo.set(saved_port)
         elif ports:
             self._port_combo.current(0)
         else:
             self._port_combo.set('')
+
+        if saved_baud:
+            self._baud_combo.set(str(saved_baud))
+
+    def _save_active_pref(self) -> None:
+        '''
+            Persists selected port and baud rate to preferences.
+
+            :exceptions: None.
+        '''
+        port: str = self._port_combo.get()
+        try:
+            baud: int = int(self._baud_combo.get())
+        except ValueError:
+            baud = 115200
+        if port and port != 'Virtual / None':
+            SerialDevicePreferences.save_preference(port, baud)
 
     def _handle_click(self) -> None:
         '''
@@ -181,6 +205,7 @@ class SerialBar(tk.Frame):
                 baud: int = int(self._baud_combo.get())
             except ValueError:
                 baud = 115200
+            self._save_active_pref()
             self._on_connect_toggle(port, baud)
 
     def set_connected_state(self, connected: bool) -> None:
