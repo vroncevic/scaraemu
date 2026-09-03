@@ -170,9 +170,12 @@ Tool structure
          │   │   ├── protocol/
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
+         │   │   │   ├── config_command_formatter.py
          │   │   │   ├── firmware_response_dto.py
          │   │   │   ├── __init__.py
+         │   │   │   ├── motion_command_formatter.py
          │   │   │   └── protocol_parser.py
+         │   │   ├── serial_device_preferences.py
          │   │   ├── serial_port_scanner.py
          │   │   └── transport/
          │   │       ├── __init__.py
@@ -195,6 +198,7 @@ Tool structure
          │       │   ├── telemetry_panel.py
          │       │   └── trajectory_demo_panel.py
          │       ├── engine.py
+         │       ├── gui_event_handler.py
          │       ├── hardware_bridge_controller.py
          │       ├── icanvas_xy.py
          │       ├── icanvas_z.py
@@ -215,7 +219,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     15 directories, 79 files
+     15 directories, 83 files
 ```
 </details>
 
@@ -285,20 +289,20 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/core/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/model/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/model/kinematics_config_dto.py` | 18 | 0 | 100%|
-| `scaraemu/core/model/scara_geometry.py` | 24 | 0 | 100%|
+| `scaraemu/core/model/scara_geometry.py` | 37 | 0 | 100%|
 | `scaraemu/core/model/scara_joints.py` | 17 | 0 | 100%|
 | `scaraemu/core/model/scara_pose.py` | 16 | 0 | 100%|
 | `scaraemu/core/model/scara_step_coords.py` | 16 | 0 | 100%|
 | `scaraemu/core/model/simulation_state_dto.py` | 17 | 0 | 100%|
-| `scaraemu/core/model/telemetry_dto.py` | 21 | 0 | 100%|
+| `scaraemu/core/model/telemetry_dto.py` | 22 | 0 | 100%|
 | `scaraemu/core/service/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/demo_generator.py` | 55 | 0 | 100%|
-| `scaraemu/core/service/emulator_service.py` | 120 | 28 | 77%|
+| `scaraemu/core/service/emulator_service.py` | 124 | 28 | 77%|
 | `scaraemu/core/service/engine.py` | 24 | 0 | 100%|
-| `scaraemu/core/service/iemulator_service.py` | 30 | 0 | 100%|
+| `scaraemu/core/service/iemulator_service.py` | 31 | 0 | 100%|
 | `scaraemu/core/service/ikinematics_service.py` | 24 | 0 | 100%|
 | `scaraemu/core/service/iservice.py` | 17 | 0 | 100%|
-| `scaraemu/core/service/kinematics_service.py` | 97 | 4 | 96%|
+| `scaraemu/core/service/kinematics_service.py` | 127 | 31 | 76%|
 | `scaraemu/engine.py` | 64 | 64 | 0%|
 | `scaraemu/infrastructure/cli/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/cli/engine.py` | 40 | 7 | 82%|
@@ -321,26 +325,30 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/infrastructure/command/icommand_executor.py` | 14 | 0 | 100%|
 | `scaraemu/infrastructure/communication/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/communication/protocol/command_formatter.py` | 38 | 0 | 100%|
-| `scaraemu/infrastructure/communication/protocol/command_templates.py` | 20 | 0 | 100%|
+| `scaraemu/infrastructure/communication/protocol/command_formatter.py` | 12 | 0 | 100%|
+| `scaraemu/infrastructure/communication/protocol/command_templates.py` | 31 | 0 | 100%|
+| `scaraemu/infrastructure/communication/protocol/config_command_formatter.py` | 37 | 8 | 78%|
 | `scaraemu/infrastructure/communication/protocol/firmware_response_dto.py` | 17 | 0 | 100%|
-| `scaraemu/infrastructure/communication/protocol/protocol_parser.py` | 64 | 3 | 95%|
+| `scaraemu/infrastructure/communication/protocol/motion_command_formatter.py` | 51 | 3 | 94%|
+| `scaraemu/infrastructure/communication/protocol/protocol_parser.py` | 104 | 14 | 87%|
+| `scaraemu/infrastructure/communication/serial_device_preferences.py` | 40 | 20 | 50%|
 | `scaraemu/infrastructure/communication/serial_port_scanner.py` | 43 | 3 | 93%|
 | `scaraemu/infrastructure/communication/transport/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/communication/transport/itransport.py` | 22 | 5 | 77%|
 | `scaraemu/infrastructure/communication/transport/serial_transport.py` | 102 | 59 | 42%|
 | `scaraemu/infrastructure/communication/transport/tcp_transport.py` | 96 | 55 | 43%|
 | `scaraemu/infrastructure/gui/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/gui/canvas_xy.py` | 105 | 71 | 32%|
+| `scaraemu/infrastructure/gui/canvas_xy.py` | 157 | 122 | 22%|
 | `scaraemu/infrastructure/gui/canvas_z.py` | 74 | 46 | 38%|
 | `scaraemu/infrastructure/gui/components/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/gui/components/jog_panel.py` | 76 | 47 | 38%|
-| `scaraemu/infrastructure/gui/components/serial_bar.py` | 70 | 46 | 34%|
-| `scaraemu/infrastructure/gui/components/serial_console_panel.py` | 56 | 35 | 38%|
+| `scaraemu/infrastructure/gui/components/jog_panel.py` | 83 | 52 | 37%|
+| `scaraemu/infrastructure/gui/components/serial_bar.py` | 87 | 61 | 30%|
+| `scaraemu/infrastructure/gui/components/serial_console_panel.py` | 75 | 52 | 31%|
 | `scaraemu/infrastructure/gui/components/telemetry_panel.py` | 62 | 34 | 45%|
 | `scaraemu/infrastructure/gui/components/trajectory_demo_panel.py` | 46 | 25 | 46%|
-| `scaraemu/infrastructure/gui/engine.py` | 174 | 114 | 34%|
-| `scaraemu/infrastructure/gui/hardware_bridge_controller.py` | 93 | 19 | 80%|
+| `scaraemu/infrastructure/gui/engine.py` | 133 | 78 | 41%|
+| `scaraemu/infrastructure/gui/gui_event_handler.py` | 115 | 85 | 26%|
+| `scaraemu/infrastructure/gui/hardware_bridge_controller.py` | 117 | 30 | 74%|
 | `scaraemu/infrastructure/gui/icanvas_xy.py` | 19 | 2 | 89%|
 | `scaraemu/infrastructure/gui/icanvas_z.py` | 17 | 2 | 88%|
 | `scaraemu/infrastructure/gui/igui.py` | 16 | 2 | 88%|
@@ -349,13 +357,13 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/setup/bundle.py` | 25 | 1 | 96%|
 | `scaraemu/setup/dep_validator.py` | 36 | 1 | 97%|
 | `scaraemu/setup/dependencies.py` | 21 | 0 | 100%|
-| `scaraemu/setup/factory.py` | 80 | 3 | 96%|
+| `scaraemu/setup/factory.py` | 88 | 3 | 97%|
 | `scaraemu/setup/keys.py` | 39 | 0 | 100%|
 | `scaraemu/setup/opt_validator.py` | 36 | 2 | 94%|
 | `scaraemu/setup/options.py` | 22 | 0 | 100%|
 | `scaraemu/setup/registry.py` | 34 | 1 | 97%|
 | `scaraemu/setup/validator.py` | 53 | 5 | 91%|
-| **Total** | 2683 | 700 | 74% |
+| **Total** | 3086 | 917 | 70% |
 
 </details>
 

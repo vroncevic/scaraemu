@@ -165,9 +165,12 @@ Tool structure
          │   │   ├── protocol/
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
+         │   │   │   ├── config_command_formatter.py
          │   │   │   ├── firmware_response_dto.py
          │   │   │   ├── __init__.py
+         │   │   │   ├── motion_command_formatter.py
          │   │   │   └── protocol_parser.py
+         │   │   ├── serial_device_preferences.py
          │   │   ├── serial_port_scanner.py
          │   │   └── transport/
          │   │       ├── __init__.py
@@ -190,6 +193,7 @@ Tool structure
          │       │   ├── telemetry_panel.py
          │       │   └── trajectory_demo_panel.py
          │       ├── engine.py
+         │       ├── gui_event_handler.py
          │       ├── hardware_bridge_controller.py
          │       ├── icanvas_xy.py
          │       ├── icanvas_z.py
@@ -210,7 +214,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     15 directories, 79 files
+     15 directories, 83 files
 
 ✨ Features
 -----------

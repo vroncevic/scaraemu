@@ -58,6 +58,7 @@ class IEmulatorService(Protocol):
                 | set_elbow_mode - Toggles elbow orientation mode.
                 | set_motors_enabled - Enables or disables stepper motor drivers.
                 | set_estop - Sets emergency stop state.
+                | set_hold - Sets feed-hold pause state.
                 | set_hardware_connected - Sets hardware bridge connection state.
                 | update_hardware_pose - Updates current robot pose from hardware telemetry.
     '''
@@ -157,6 +158,14 @@ class IEmulatorService(Protocol):
             Sets emergency stop state.
 
             :param active: True to engage E-STOP, False to clear.
+            :exceptions: None.
+        '''
+
+    def set_hold(self, active: bool) -> None:
+        '''
+            Sets feed-hold pause state.
+
+            :param active: True to pause motion queue, False to resume.
             :exceptions: None.
         '''
 

@@ -26,10 +26,8 @@ from tkinter import ttk
 from typing import Final
 
 from scaraemu.core.service.iservice import IService
-from scaraemu.core.service.demo_generator import TrajectoryDemoGenerator
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.communication.protocol.command_formatter import CommandFormatter
 from scaraemu.infrastructure.gui.igui import IGUI
 from scaraemu.infrastructure.gui.theme import ThemeManager
 from scaraemu.infrastructure.gui.canvas_xy import CanvasXY
@@ -40,6 +38,7 @@ from scaraemu.infrastructure.gui.components.jog_panel import JogPanel
 from scaraemu.infrastructure.gui.components.trajectory_demo_panel import TrajectoryDemoPanel
 from scaraemu.infrastructure.gui.components.serial_console_panel import SerialConsolePanel
 from scaraemu.infrastructure.gui.hardware_bridge_controller import HardwareBridgeController
+from scaraemu.infrastructure.gui.gui_event_handler import GuiEventHandler
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -79,6 +78,7 @@ class ScaraEmuGUI(IGUI):
     _canvas_z: CanvasZ | None
     _telemetry_panel: TelemetryPanel | None
     _demo_panel: TrajectoryDemoPanel | None
+    _console_panel: SerialConsolePanel | None
 
     def __init__(
         self,
@@ -88,15 +88,16 @@ class ScaraEmuGUI(IGUI):
         '''
             Initializes GUI adapter with service and transport dependencies.
 
-            :param service: Kinematics and simulation service.
-            :param transport: Communication transport.
+            :param service: Simulation and kinematics facade.
+            :param transport: Communication transport instance.
             :exceptions: None.
         '''
         self._service = service
         self._bridge = HardwareBridgeController(
             transport=transport,
             on_state_change=self._on_bridge_state_change,
-            on_telemetry=self._on_hardware_telemetry
+            on_telemetry=self._on_hardware_telemetry,
+            on_elbow_change=self._on_hardware_elbow_change
         )
         self._root = None
         self._serial_bar = None
@@ -104,6 +105,7 @@ class ScaraEmuGUI(IGUI):
         self._canvas_z = None
         self._telemetry_panel = None
         self._demo_panel = None
+        self._console_panel = None
 
     def is_initialized(self) -> bool:
         '''
@@ -140,11 +142,19 @@ class ScaraEmuGUI(IGUI):
         geom = self._service.get_kinematics().get_geometry()
         self._canvas_xy = CanvasXY(left_col, geometry=geom)
         self._canvas_xy.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
-        self._canvas_xy.set_on_target_click(self._handle_xy_click)
 
         self._canvas_z = CanvasZ(left_col, geometry=geom, height=180)
         self._canvas_z.pack(fill=tk.X)
-        self._canvas_z.set_on_target_click(self._handle_z_click)
+
+        event_handler = GuiEventHandler(
+            service=self._service,
+            bridge=self._bridge,
+            log_host=self._log_host,
+            flash_unreachable=lambda x, y: self._canvas_xy.flash_unreachable(x, y) if self._canvas_xy is not None else None
+        )
+
+        self._canvas_xy.set_on_target_click(event_handler.handle_xy_click)
+        self._canvas_z.set_on_target_click(event_handler.handle_z_click)
 
         right_col: tk.Frame = tk.Frame(main_paned, bg=ThemeManager.BG_DARK, width=390)
         main_paned.add(right_col, stretch='never')
@@ -163,28 +173,38 @@ class ScaraEmuGUI(IGUI):
         self._telemetry_panel = TelemetryPanel(tab_control)
         self._telemetry_panel.pack(fill=tk.X, pady=(0, 6))
 
+        def _toggle_hold() -> None:
+            emu = self._service.get_emulator()
+            held = not emu.get_telemetry().hold_active
+            emu.set_hold(held)
+            if held:
+                self._bridge.send_hardware_hold()
+            else:
+                self._bridge.send_hardware_resume()
+
         jog_panel = JogPanel(
             tab_control,
-            on_jog=self._handle_jog,
-            on_home_xy=lambda: self._handle_home('xy'),
-            on_home_z=lambda: self._handle_home('z'),
-            on_toggle_elbow=self._handle_toggle_elbow,
-            on_toggle_motors=self._handle_toggle_motors,
-            on_estop=self._handle_estop
+            on_jog=event_handler.handle_jog,
+            on_home_xy=lambda: event_handler.handle_home('xy'),
+            on_home_z=lambda: event_handler.handle_home('z'),
+            on_toggle_elbow=event_handler.handle_toggle_elbow,
+            on_toggle_motors=event_handler.handle_toggle_motors,
+            on_toggle_hold=_toggle_hold,
+            on_estop=event_handler.handle_estop
         )
         jog_panel.pack(fill=tk.X)
 
         self._demo_panel = TrajectoryDemoPanel(
             tab_demo,
-            on_demo_select=self._handle_demo_select,
+            on_demo_select=event_handler.handle_demo_select,
             on_clear_queue=lambda: (self._service.get_emulator().clear_queue(), self._bridge.clear_queue())
         )
         self._demo_panel.pack(fill=tk.X, pady=(0, 6))
 
-        console_panel = SerialConsolePanel(tab_console, on_send_cmd=self._bridge.handle_manual_send)
-        console_panel.pack(fill=tk.BOTH, expand=True)
+        self._console_panel = SerialConsolePanel(tab_console, on_send_cmd=self._bridge.handle_manual_send)
+        self._console_panel.pack(fill=tk.BOTH, expand=True)
 
-        self._bridge.set_log_listener(console_panel.append_log)
+        self._bridge.set_log_listener(self._console_panel.append_log)
 
         self._root.update_idletasks()
         try:
@@ -240,128 +260,16 @@ class ScaraEmuGUI(IGUI):
         if self._demo_panel is not None:
             self._demo_panel.update_queue_depth(sim_state.queue_depth)
 
-    def _handle_xy_click(self, x: float, y: float) -> None:
+    def _log_host(self, msg: str, tag: str = 'err') -> None:
         '''
-            Handles click on XY planar canvas.
+            Appends host diagnostic message to serial console.
 
-            :param x: Target X in mm.
-            :param y: Target Y in mm.
+            :param msg: Message string.
+            :param tag: Color tag.
             :exceptions: None.
         '''
-        emu = self._service.get_emulator()
-        curr = emu.get_current_pose()
-        new_pose = ScaraPose(x=x, y=y, z=curr.z, phi=curr.phi)
-        emu.set_target_pose(new_pose, direct=False)
-        self._bridge.send_hardware_move(new_pose)
-
-    def _handle_z_click(self, z: float) -> None:
-        '''
-            Handles click on Z vertical canvas.
-
-            :param z: Target Z in mm.
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        curr = emu.get_current_pose()
-        new_pose = ScaraPose(x=curr.x, y=curr.y, z=z, phi=curr.phi)
-        emu.set_target_pose(new_pose, direct=False)
-        self._bridge.send_hardware_move(new_pose)
-
-    def _handle_jog(self, dx: float, dy: float, dz: float, dphi: float) -> None:
-        '''
-            Handles manual incremental jog displacement.
-
-            :param dx: Delta X in mm.
-            :param dy: Delta Y in mm.
-            :param dz: Delta Z in mm.
-            :param dphi: Delta Phi in radians.
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        curr = emu.get_current_pose()
-        target = ScaraPose(
-            x=curr.x + dx,
-            y=curr.y + dy,
-            z=curr.z + dz,
-            phi=curr.phi + dphi
-        )
-        emu.set_target_pose(target, direct=False)
-        self._bridge.send_hardware_move(target)
-
-    def _handle_home(self, axis: str) -> None:
-        '''
-            Handles homing motion for specified axis (planar XY or vertical Z).
-
-            :param axis: Target axis ('xy' or 'z').
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        geom = self._service.get_kinematics().get_geometry()
-        curr = emu.get_current_pose()
-
-        if axis == 'xy':
-            home_x: float = (geom.l1 + geom.l2) * 0.65
-            target = ScaraPose(x=home_x, y=0.0, z=curr.z, phi=0.0)
-        elif axis == 'z':
-            home_z: float = geom.z_min + 20.0
-            target = ScaraPose(x=curr.x, y=curr.y, z=home_z, phi=curr.phi)
-        else:
-            home_x = (geom.l1 + geom.l2) * 0.65
-            home_z = geom.z_min + 20.0
-            target = ScaraPose(x=home_x, y=0.0, z=home_z, phi=0.0)
-
-        emu.set_target_pose(target, direct=False)
-        self._bridge.send_hardware_move(target)
-
-
-    def _handle_toggle_elbow(self) -> None:
-        '''
-            Toggles between Lefty and Righty elbow configurations.
-
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        curr_left = emu.get_telemetry().joints.theta2 < 0
-        emu.set_elbow_mode(not curr_left)
-
-    def _handle_toggle_motors(self) -> None:
-        '''
-            Toggles motor driver power enable.
-
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        curr_state = emu.get_telemetry().motors_enabled
-        emu.set_motors_enabled(not curr_state)
-        cmd = CommandFormatter.format_enable_motors() if not curr_state else CommandFormatter.format_disable_motors()
-        self._bridge.handle_manual_send(cmd)
-
-    def _handle_estop(self) -> None:
-        '''
-            Executes emergency stop.
-
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        emu.set_estop(True)
-        self._bridge.clear_queue()
-        self._bridge.handle_manual_send(CommandFormatter.format_estop())
-
-    def _handle_demo_select(self, demo_name: str) -> None:
-        '''
-            Generates and queues demo trajectory waypoints.
-
-            :param demo_name: Demo trajectory identifier.
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        curr = emu.get_current_pose()
-        poses = TrajectoryDemoGenerator.generate(demo_name, center_x=curr.x, center_y=curr.y, z=curr.z)
-
-        if poses:
-            emu.enqueue_trajectory(poses)
-            self._bridge.enqueue_hardware_trajectory(poses)
-
+        if self._console_panel is not None:
+            self._console_panel.append_log(msg, tag)
     def _on_bridge_state_change(self, connected: bool) -> None:
         '''
             Updates emulator service connection status.
@@ -381,4 +289,13 @@ class ScaraEmuGUI(IGUI):
             :exceptions: None.
         '''
         self._service.get_emulator().update_hardware_pose(pose)
+
+    def _on_hardware_elbow_change(self, is_left: bool) -> None:
+        '''
+            Synchronizes local emulator elbow configuration from hardware.
+
+            :param is_left: True if Lefty, False if Righty.
+            :exceptions: None.
+        '''
+        self._service.get_emulator().set_elbow_mode(is_left)
 

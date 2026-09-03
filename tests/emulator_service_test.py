@@ -92,6 +92,24 @@ class TestEmulatorService(unittest.TestCase):
         self.assertEqual(self.emu.get_simulation_state().queue_depth, 0)
         self.assertTrue(self.emu.get_telemetry().estop_active)
 
+    def test_hold_and_resume(self) -> None:
+        '''Tests feed-hold pausing motion queue without clearing it.'''
+        target = ScaraPose(x=185.0, y=10.0, z=20.0)
+        self.emu.set_target_pose(target, direct=False)
+        initial_depth = self.emu.get_simulation_state().queue_depth
+        self.assertGreater(initial_depth, 0)
+
+        self.emu.set_hold(True)
+        self.assertTrue(self.emu.get_telemetry().hold_active)
+        stepped = self.emu.step_simulation()
+        self.assertFalse(stepped)
+        self.assertEqual(self.emu.get_simulation_state().queue_depth, initial_depth)
+
+        self.emu.set_hold(False)
+        self.assertFalse(self.emu.get_telemetry().hold_active)
+        stepped = self.emu.step_simulation()
+        self.assertTrue(stepped)
+
     def test_demo_generators(self) -> None:
         '''Tests preset demo trajectory point generators.'''
         circle = TrajectoryDemoGenerator.generate_circle(center_x=150.0, center_y=0.0, radius=30.0, z=20.0)

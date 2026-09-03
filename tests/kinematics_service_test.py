@@ -46,11 +46,25 @@ class TestKinematicsService(unittest.TestCase):
         self.solver = KinematicsService(geometry=self.geom)
 
     def test_reachability(self) -> None:
-        '''Tests workspace reach boundaries.'''
+        '''Tests workspace reach boundaries and singularity safety margins.'''
         self.assertTrue(self.solver.is_reachable(150.0, 0.0))
         self.assertTrue(self.solver.is_reachable(0.0, 200.0))
         self.assertFalse(self.solver.is_reachable(300.0, 0.0))  # Exceeds max reach (270)
+        self.assertFalse(self.solver.is_reachable(269.0, 0.0))  # Outside safe outer margin (267)
         self.assertFalse(self.solver.is_reachable(10.0, 0.0))   # Inside dead zone (< 30)
+        self.assertFalse(self.solver.is_reachable(31.0, 0.0))   # Inside safe inner margin (33)
+
+    def test_singularity_and_joint_limits(self) -> None:
+        '''Tests rejection of poses exceeding joint limits or near singularities.'''
+        # Test pose near outer singularity
+        near_singularity = ScaraPose(x=269.5, y=0.0, z=20.0)
+        joints = self.solver.solve_ik(near_singularity)
+        self.assertFalse(joints.reachable)
+
+        # Test valid intermediate pose
+        valid_pose = ScaraPose(x=180.0, y=50.0, z=25.0)
+        joints_valid = self.solver.solve_ik(valid_pose)
+        self.assertTrue(joints_valid.reachable)
 
     def test_ik_fk_roundtrip_righty(self) -> None:
         '''Tests inverse and forward kinematics round-trip for righty configuration.'''

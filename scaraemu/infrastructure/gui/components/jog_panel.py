@@ -50,6 +50,7 @@ class JogPanel(tk.LabelFrame):
                 | _on_home_z - Callback for homing vertical Z axis.
                 | _on_toggle_elbow - Callback for elbow solution toggling.
                 | _on_toggle_motors - Callback for motor driver power toggling.
+                | _on_toggle_hold - Callback for feed-hold pause toggling.
                 | _on_estop - Callback for emergency stop.
             :methods:
                 | __init__ - Initializes jog buttons and control elements.
@@ -61,6 +62,7 @@ class JogPanel(tk.LabelFrame):
     _on_home_z: Callable[[], None] | None
     _on_toggle_elbow: Callable[[], None] | None
     _on_toggle_motors: Callable[[], None] | None
+    _on_toggle_hold: Callable[[], None] | None
     _on_estop: Callable[[], None] | None
 
     def __init__(
@@ -71,6 +73,7 @@ class JogPanel(tk.LabelFrame):
         on_home_z: Callable[[], None] | None = None,
         on_toggle_elbow: Callable[[], None] | None = None,
         on_toggle_motors: Callable[[], None] | None = None,
+        on_toggle_hold: Callable[[], None] | None = None,
         on_estop: Callable[[], None] | None = None
     ) -> None:
         '''
@@ -82,6 +85,7 @@ class JogPanel(tk.LabelFrame):
             :param on_home_z: Callback for homing Z vertical axis.
             :param on_toggle_elbow: Callback for toggling elbow-left/right.
             :param on_toggle_motors: Callback for motor enable/disable.
+            :param on_toggle_hold: Callback for feed-hold pause/resume toggle.
             :param on_estop: Callback for emergency stop.
             :exceptions: None.
         '''
@@ -99,6 +103,7 @@ class JogPanel(tk.LabelFrame):
         self._on_home_z = on_home_z
         self._on_toggle_elbow = on_toggle_elbow
         self._on_toggle_motors = on_toggle_motors
+        self._on_toggle_hold = on_toggle_hold
         self._on_estop = on_estop
 
         step_frame: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_PANEL)
@@ -157,6 +162,17 @@ class JogPanel(tk.LabelFrame):
             command=self._handle_elbow
         )
         btn_elbow.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 4))
+
+        btn_hold: tk.Button = tk.Button(
+            ctrl_frame,
+            text='HOLD',
+            bg=ThemeManager.ACCENT_ORANGE,
+            fg='#1e1e2e',
+            font=(ThemeManager.FONT_FAMILY, 8, 'bold'),
+            relief=tk.FLAT,
+            command=self._handle_hold
+        )
+        btn_hold.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=(0, 4))
 
         btn_estop: tk.Button = tk.Button(
             ctrl_frame,
@@ -218,6 +234,15 @@ class JogPanel(tk.LabelFrame):
         if self._on_toggle_elbow is not None:
             self._on_toggle_elbow()
 
+    def _handle_hold(self) -> None:
+        '''
+            Dispatches feed-hold pause toggle command.
+
+            :exceptions: None.
+        '''
+        if self._on_toggle_hold is not None:
+            self._on_toggle_hold()
+
     def _handle_estop(self) -> None:
         '''
             Dispatches emergency stop command.
@@ -261,4 +286,5 @@ class JogPanel(tk.LabelFrame):
             command=cmd
         )
         b.grid(row=r, column=c, padx=2, pady=2)
+
         return b

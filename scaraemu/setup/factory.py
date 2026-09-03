@@ -21,8 +21,7 @@ Info
 
 from __future__ import annotations
 
-import os
-import json
+from os.path import exists
 from typing import Any
 
 from ats_utilities.base.setup.factory import BaseBundleFactory
@@ -30,7 +29,10 @@ from ats_utilities.base.setup.bundle import BaseBundle
 from ats_utilities.base.setup.options import BaseBundleOptions
 from ats_utilities.context.bundle import ContextBundle
 from ats_utilities.context.factory import ContextBundleFactory
-from ats_utilities.config_io.processor.json_processor import JSONProcessor
+from ats_utilities.config_io.loader.engine import Loader
+from ats_utilities.config_io.setup.factory import ConfigIOBundleFactory
+from ats_utilities.config_io.setup.options import ConfigIOBundleOptions
+from ats_utilities.config_io.setup.keys import ConfigIOBundleKeys
 
 from scaraemu.core.model.scara_geometry import ScaraGeometry
 from scaraemu.core.service.kinematics_service import KinematicsService
@@ -94,18 +96,27 @@ class SCARAEmuBundleFactory:
 
         config_data: dict[str, Any] = {}
 
-        if os.path.exists(config_path) and os.path.exists(cls._geometry_scheme_file):
+        if exists(config_path) and exists(cls._geometry_scheme_file):
             try:
-                with open(cls._geometry_scheme_file, 'r', encoding='utf-8') as sf:
-                    scheme = json.load(sf)
+                context: ContextBundle = ContextBundleFactory.create_bundle()
+                scheme_bundle = ConfigIOBundleFactory.create_bundle(
+                    ConfigIOBundleOptions({
+                        ConfigIOBundleKeys.OPTION_FILE_PATH: cls._geometry_scheme_file,
+                        ConfigIOBundleKeys.OPTION_CONTEXT_BUNDLE: context
+                    })
+                )
+                scheme = Loader(scheme_bundle).load_configuration()
 
-                processor: JSONProcessor = JSONProcessor(scheme=scheme)
+                config_bundle = ConfigIOBundleFactory.create_bundle(
+                    ConfigIOBundleOptions({
+                        ConfigIOBundleKeys.OPTION_FILE_PATH: config_path,
+                        ConfigIOBundleKeys.OPTION_SCHEME: scheme,
+                        ConfigIOBundleKeys.OPTION_CONTEXT_BUNDLE: context
+                    })
+                )
+                config_data = Loader(config_bundle).load_configuration()
 
-                with open(config_path, 'r', encoding='utf-8') as cf:
-                    if processor.deserialize(cf.read()) and processor.validate_by_scheme():
-                        config_data = processor.to_dict()
-
-            except (OSError, json.JSONDecodeError):
+            except Exception:
                 config_data = {}
 
         l1: float = (
@@ -139,13 +150,34 @@ class SCARAEmuBundleFactory:
             else float(config_data.get('max_speed', 100.0))
         )
 
+        j1_min_rad: float = float(config_data.get('j1_min_rad', -2.617994))
+        j1_max_rad: float = float(config_data.get('j1_max_rad', 2.617994))
+        j2_min_rad: float = float(config_data.get('j2_min_rad', -2.530727))
+        j2_max_rad: float = float(config_data.get('j2_max_rad', 2.530727))
+        singularity_outer_margin_mm: float = float(
+            config_data.get('singularity_outer_margin_mm', 3.0)
+        )
+        singularity_inner_margin_mm: float = float(
+            config_data.get('singularity_inner_margin_mm', 3.0)
+        )
+        singularity_theta2_min_rad: float = float(
+            config_data.get('singularity_theta2_min_rad', 0.087266)
+        )
+
         return ScaraGeometry(
             l1=l1,
             l2=l2,
             z_min=z_min,
             z_max=z_max,
             min_speed=min_speed,
-            max_speed=max_speed
+            max_speed=max_speed,
+            j1_min_rad=j1_min_rad,
+            j1_max_rad=j1_max_rad,
+            j2_min_rad=j2_min_rad,
+            j2_max_rad=j2_max_rad,
+            singularity_outer_margin_mm=singularity_outer_margin_mm,
+            singularity_inner_margin_mm=singularity_inner_margin_mm,
+            singularity_theta2_min_rad=singularity_theta2_min_rad
         )
 
     @classmethod

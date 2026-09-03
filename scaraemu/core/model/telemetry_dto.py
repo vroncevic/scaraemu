@@ -51,6 +51,7 @@ class TelemetryDTO:
                 | is_hardware_connected - Hardware bridge active status flag.
                 | motors_enabled - Stepper driver power enable status.
                 | estop_active - Emergency stop active status flag.
+                | hold_active - Feed-hold pause active status flag.
     '''
 
     pose: ScaraPose
@@ -59,3 +60,4 @@ class TelemetryDTO:
     is_hardware_connected: bool = False
     motors_enabled: bool = True
     estop_active: bool = False
+    hold_active: bool = False

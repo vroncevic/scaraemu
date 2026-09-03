@@ -57,6 +57,7 @@ class EmulatorService(IEmulatorService):
                 | _elbow_left - Active elbow orientation configuration flag.
                 | _motors_enabled - Stepper motor driver power state.
                 | _estop_active - Emergency stop engagement flag.
+                | _hold_active - Feed-hold pause engagement flag.
                 | _motion_queue - FIFO queue of interpolated waypoint poses.
                 | _trail_points - Fixed-size historical XY coordinate trail buffer.
                 | _is_hardware_connected - Hardware bridge active status flag.
@@ -73,11 +74,12 @@ class EmulatorService(IEmulatorService):
                 | set_elbow_mode - Toggles elbow orientation mode.
                 | set_motors_enabled - Enables or disables stepper motor drivers.
                 | set_estop - Sets emergency stop state.
+                | set_hold - Sets feed-hold pause state.
                 | set_hardware_connected - Updates hardware connection state.
                 | update_hardware_pose - Updates current robot pose from hardware telemetry.
     '''
 
-    MAX_TRAIL_LENGTH: Final[int] = 120
+    MAX_TRAIL_LENGTH: Final[int] = 1000
 
     _kinematics: IKinematicsService
     _current_pose: ScaraPose
@@ -86,6 +88,7 @@ class EmulatorService(IEmulatorService):
     _elbow_left: bool
     _motors_enabled: bool
     _estop_active: bool
+    _hold_active: bool
     _motion_queue: deque[ScaraPose]
     _trail_points: deque[tuple[float, float]]
     _is_hardware_connected: bool
@@ -106,6 +109,7 @@ class EmulatorService(IEmulatorService):
         self._elbow_left = False
         self._motors_enabled = True
         self._estop_active = False
+        self._hold_active = False
         self._is_hardware_connected = False
         self._active_target = None
 
@@ -214,7 +218,13 @@ class EmulatorService(IEmulatorService):
             :return: True if robot position changed, False if idle.
             :exceptions: None.
         '''
-        if self._is_hardware_connected or not self._motion_queue or not self._motors_enabled or self._estop_active:
+        if (
+            self._is_hardware_connected
+            or not self._motion_queue
+            or not self._motors_enabled
+            or self._estop_active
+            or self._hold_active
+        ):
             return False
 
         next_pose: ScaraPose = self._motion_queue.popleft()
@@ -253,7 +263,8 @@ class EmulatorService(IEmulatorService):
             steps=steps,
             is_hardware_connected=self._is_hardware_connected,
             motors_enabled=self._motors_enabled,
-            estop_active=self._estop_active
+            estop_active=self._estop_active,
+            hold_active=self._hold_active
         )
 
     def get_simulation_state(self) -> SimulationStateDTO:
@@ -303,6 +314,15 @@ class EmulatorService(IEmulatorService):
         if active:
             self._active_target = None
             self._motion_queue.clear()
+
+    def set_hold(self, active: bool) -> None:
+        '''
+            Sets feed-hold pause state.
+
+            :param active: True to pause motion queue, False to resume.
+            :exceptions: None.
+        '''
+        self._hold_active = active
 
     def set_hardware_connected(self, connected: bool) -> None:
         '''

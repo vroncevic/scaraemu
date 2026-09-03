@@ -50,6 +50,8 @@ class SerialConsolePanel(tk.LabelFrame):
             :methods:
                 | __init__ - Initializes console widgets and styling tags.
                 | append_log - Appends formatted log entry to the console.
+                | select_all - Selects all text content in the console log buffer.
+                | copy_log - Copies selected or entire console log content to clipboard.
                 | clear_log - Clears console text buffer.
     '''
 
@@ -92,7 +94,29 @@ class SerialConsolePanel(tk.LabelFrame):
             relief=tk.FLAT,
             command=self.clear_log
         )
-        btn_clear.pack(side=tk.RIGHT)
+        btn_clear.pack(side=tk.RIGHT, padx=(4, 0))
+
+        btn_copy: tk.Button = tk.Button(
+            top_bar,
+            text='Copy',
+            bg='#313244',
+            fg=ThemeManager.TEXT_PRIMARY,
+            font=(ThemeManager.FONT_FAMILY, 8),
+            relief=tk.FLAT,
+            command=self.copy_log
+        )
+        btn_copy.pack(side=tk.RIGHT, padx=(4, 0))
+
+        btn_select_all: tk.Button = tk.Button(
+            top_bar,
+            text='Select All',
+            bg='#313244',
+            fg=ThemeManager.TEXT_PRIMARY,
+            font=(ThemeManager.FONT_FAMILY, 8),
+            relief=tk.FLAT,
+            command=self.select_all
+        )
+        btn_select_all.pack(side=tk.RIGHT, padx=(4, 0))
 
         log_frame: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_CANVAS)
         log_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
@@ -112,6 +136,9 @@ class SerialConsolePanel(tk.LabelFrame):
         )
         self._text_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scroll.config(command=self._text_log.yview)
+
+        self._text_log.bind('<Control-a>', lambda e: (self.select_all(), 'break')[1])
+        self._text_log.bind('<Control-c>', lambda e: (self.copy_log(), 'break')[1])
 
         self._text_log.tag_config('tx', foreground=ThemeManager.ACCENT_CYAN)
         self._text_log.tag_config('rx', foreground=ThemeManager.ACCENT_GREEN)
@@ -148,6 +175,32 @@ class SerialConsolePanel(tk.LabelFrame):
         self._text_log.insert(tk.END, f'{message}\n', tag)
         self._text_log.see(tk.END)
         self._text_log.config(state='disabled')
+
+    def select_all(self) -> None:
+        '''
+            Selects all text content in the console log buffer.
+
+            :exceptions: None.
+        '''
+        self._text_log.tag_add(tk.SEL, '1.0', tk.END)
+        self._text_log.mark_set(tk.INSERT, '1.0')
+        self._text_log.see(tk.INSERT)
+        self._text_log.focus_set()
+
+    def copy_log(self) -> None:
+        '''
+            Copies selected or entire console log content to clipboard.
+
+            :exceptions: None.
+        '''
+        try:
+            content: str = self._text_log.get(tk.SEL_FIRST, tk.SEL_LAST)
+        except tk.TclError:
+            content = self._text_log.get('1.0', tk.END).strip()
+
+        if content:
+            self.clipboard_clear()
+            self.clipboard_append(content)
 
     def clear_log(self) -> None:
         '''
