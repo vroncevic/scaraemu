@@ -134,8 +134,10 @@ Tool structure
          │       ├── iemulator_service.py
          │       ├── ikinematics_service.py
          │       ├── __init__.py
+         │       ├── iscara_script_loader.py
          │       ├── iservice.py
-         │       └── kinematics_service.py
+         │       ├── kinematics_service.py
+         │       └── scara_script_loader.py
          ├── engine.py
          ├── infrastructure/
          │   ├── cli/
@@ -175,8 +177,10 @@ Tool structure
          │   │   └── transport/
          │   │       ├── __init__.py
          │   │       ├── itransport.py
+         │   │       ├── ivirtual_robot_server.py
          │   │       ├── serial_transport.py
-         │   │       └── tcp_transport.py
+         │   │       ├── tcp_transport.py
+         │   │       └── virtual_robot_server.py
          │   ├── config/
          │   │   ├── scara_geometry.json
          │   │   ├── scaraemu.cfg
@@ -214,7 +218,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     15 directories, 83 files
+     15 directories, 87 files
 
 ✨ Features
 -----------
@@ -352,6 +356,41 @@ Interactive Emulation & Control Workflow
    * Telemetry updates synchronize live hardware position with the visualizer.
 5. **Serial Command Console**:
    * Inspect incoming raw protocol packets (``<TELEM...>``, ``<RESP:...>``) and send custom commands.
+
+🤖 Digital Twin Integration with SCARAjectory
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**scaraemu** acts as a virtual hardware target, SITL digital twin, and kinematic simulator for `scarajectory <https://github.com/vroncevic/scarajectory>`_.
+
+Method 1: Virtual Robot Server (TCP 127.0.0.1:8888)
+"""""""""""""""""""""""""""""""""""""""""""""""""""
+
+1. In **scaraemu**, click the **🌐 Virtual Server: OFF** toggle button on the top status bar.
+2. The button illuminates green and displays **🌐 Virtual Server: 8888**, listening for incoming TCP client connections on ``127.0.0.1:8888``.
+3. In **scarajectory**, navigate to the **Hardware Streamer** tab and select **127.0.0.1:8888 (Digital Twin)** from the Port dropdown.
+4. Click **Connect** in **scarajectory**.
+5. Stream any trajectory plan or jog joints interactively:
+   * **scaraemu** parses incoming motion packets (``<pt#X#Y#Z#PHI#SPEED#end>``).
+   * Forward kinematics computes joint angles (:math:`\theta_1, \theta_2, Z, \phi`) and renders real-time motion on the 2D and 3D canvases.
+   * Bidirectional handshake messages (``<RESP:ACK#QUEUE=1>``, ``<RESP:MOVE_DONE#...>``) flow back to **scarajectory** for closed-loop motion synchronization.
+
+Method 2: Launch via CLI with Initial File
+""""""""""""""""""""""""""""""""""""""""""
+
+Launch **scaraemu** with an initial ``.scara`` script or ``plan.json``:
+
+.. code-block:: bash
+
+    python3 main.py emulator --file /path/to/trajectory.scara
+
+The emulator automatically loads the file, executes forward and inverse kinematics, and displays the toolhead path.
+
+Method 3: Load .scara DSL Programs from UI
+""""""""""""""""""""""""""""""""""""""""""
+
+1. Navigate to the **Trajectories** tab in **scaraemu**.
+2. Select any program from the **SCARA DSL Script** dropdown (12 industrial demo programs included).
+3. Or click **📂 Load** to browse and open any custom ``.scara`` or JSON trajectory plan.
 
 📚 Docs
 -------

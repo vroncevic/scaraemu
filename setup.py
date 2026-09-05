@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 '''
@@ -30,7 +29,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'GNU General Public License (GPL)'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -71,7 +70,7 @@ def find_package_data(pkg: str) -> list[str]:
 
 setup(
     name='scaraemu',
-    version='1.0.1',
+    version='1.0.2',
     description='SCARA Robot 4-DOF Emulator, 2D/3D Kinematic Visualizer and Hardware Bridge.',
     author='Vladimir Roncevic',
     author_email='elektron.ronca@gmail.com',

@@ -26,6 +26,7 @@ from typing import Callable, Final
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.service.iservice import IService
 from scaraemu.core.service.demo_generator import TrajectoryDemoGenerator
+from scaraemu.core.service.scara_script_loader import ScaraScriptLoader
 from scaraemu.infrastructure.communication.protocol.command_formatter import CommandFormatter
 from scaraemu.infrastructure.gui.hardware_bridge_controller import HardwareBridgeController
 
@@ -33,7 +34,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -54,6 +55,7 @@ class GuiEventHandler:
                 | handle_toggle_motors - Toggles motor power state.
                 | handle_estop - Triggers emergency stop.
                 | handle_demo_select - Generates and queues demo trajectory.
+                | handle_load_script - Loads .scara or JSON plan and enqueues trajectory.
     '''
 
     _service: Final[IService]
@@ -249,3 +251,20 @@ class GuiEventHandler:
         if poses:
             emu.enqueue_trajectory(poses)
             self._bridge.enqueue_hardware_trajectory(poses)
+
+    def handle_load_script(self, filepath: str) -> None:
+        '''
+            Loads and parses .scara script or plan JSON file and enqueues trajectory.
+
+            :param filepath: Path to script or plan file.
+            :exceptions: None.
+        '''
+        loader: ScaraScriptLoader = ScaraScriptLoader()
+        poses: list[ScaraPose] = loader.load_from_file(filepath=filepath)
+        if poses:
+            emu = self._service.get_emulator()
+            emu.enqueue_trajectory(poses)
+            self._bridge.enqueue_hardware_trajectory(poses)
+            self._log_host(f'[HOST]: Loaded {len(poses)} waypoints from {filepath}', 'info')
+        else:
+            self._log_host(f'[HOST]: No waypoints loaded from {filepath}', 'warn')

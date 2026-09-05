@@ -21,8 +21,27 @@ Info
 
 from __future__ import annotations
 
-import tkinter as tk
-from tkinter import ttk
+from tkinter import (
+    BOTH,
+    END,
+    FLAT,
+    INSERT,
+    LEFT,
+    RIGHT,
+    SEL,
+    SEL_FIRST,
+    SEL_LAST,
+    X,
+    Y,
+    Button,
+    Frame,
+    LabelFrame,
+    Scrollbar,
+    TclError,
+    Text,
+    Widget,
+)
+from tkinter.ttk import Entry
 from typing import Callable
 
 from scaraemu.infrastructure.gui.theme import ThemeManager
@@ -31,13 +50,13 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class SerialConsolePanel(tk.LabelFrame):
+class SerialConsolePanel(LabelFrame):
     '''
         Serial packet console logger and manual command transmitter.
 
@@ -55,13 +74,13 @@ class SerialConsolePanel(tk.LabelFrame):
                 | clear_log - Clears console text buffer.
     '''
 
-    _text_log: tk.Text
-    _entry_cmd: ttk.Entry
+    _text_log: Text
+    _entry_cmd: Entry
     _on_send_cmd: Callable[[str], None] | None
 
     def __init__(
         self,
-        parent: tk.Widget,
+        parent: Widget,
         on_send_cmd: Callable[[str], None] | None = None
     ) -> None:
         '''
@@ -82,59 +101,60 @@ class SerialConsolePanel(tk.LabelFrame):
         )
         self._on_send_cmd = on_send_cmd
 
-        top_bar: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_PANEL)
-        top_bar.pack(fill=tk.X, pady=(0, 5))
+        top_bar: Frame = Frame(self, bg=ThemeManager.BG_PANEL)
+        top_bar.pack(fill=X, pady=(0, 5))
 
-        btn_clear: tk.Button = tk.Button(
+        btn_clear: Button = Button(
             top_bar,
             text='Clear Log',
             bg='#313244',
             fg=ThemeManager.TEXT_PRIMARY,
             font=(ThemeManager.FONT_FAMILY, 8),
-            relief=tk.FLAT,
+            relief=FLAT,
             command=self.clear_log
         )
-        btn_clear.pack(side=tk.RIGHT, padx=(4, 0))
+        btn_clear.pack(side=RIGHT, padx=(4, 0))
 
-        btn_copy: tk.Button = tk.Button(
+        btn_copy: Button = Button(
             top_bar,
             text='Copy',
             bg='#313244',
             fg=ThemeManager.TEXT_PRIMARY,
             font=(ThemeManager.FONT_FAMILY, 8),
-            relief=tk.FLAT,
+            relief=FLAT,
             command=self.copy_log
         )
-        btn_copy.pack(side=tk.RIGHT, padx=(4, 0))
+        btn_copy.pack(side=RIGHT, padx=(4, 0))
 
-        btn_select_all: tk.Button = tk.Button(
+        btn_select_all: Button = Button(
             top_bar,
             text='Select All',
             bg='#313244',
             fg=ThemeManager.TEXT_PRIMARY,
             font=(ThemeManager.FONT_FAMILY, 8),
-            relief=tk.FLAT,
+            relief=FLAT,
             command=self.select_all
         )
-        btn_select_all.pack(side=tk.RIGHT, padx=(4, 0))
+        btn_select_all.pack(side=RIGHT, padx=(4, 0))
 
-        log_frame: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_CANVAS)
-        log_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 8))
+        log_frame: Frame = Frame(self, bg=ThemeManager.BG_CANVAS)
+        log_frame.pack(fill=BOTH, expand=True, pady=(0, 8))
 
-        scroll: tk.Scrollbar = tk.Scrollbar(log_frame)
-        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        scroll: Scrollbar = Scrollbar(log_frame)
+        scroll.pack(side=RIGHT, fill=Y)
 
-        self._text_log = tk.Text(
+        self._text_log = Text(
             log_frame,
+            width=1,
             height=6,
             bg=ThemeManager.BG_CANVAS,
             fg=ThemeManager.TEXT_PRIMARY,
             font=(ThemeManager.FONT_MONO, 8),
             yscrollcommand=scroll.set,
-            relief=tk.FLAT,
+            relief=FLAT,
             state='disabled'
         )
-        self._text_log.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self._text_log.pack(side=LEFT, fill=BOTH, expand=True)
         scroll.config(command=self._text_log.yview)
 
         self._text_log.bind('<Control-a>', lambda e: (self.select_all(), 'break')[1])
@@ -145,23 +165,23 @@ class SerialConsolePanel(tk.LabelFrame):
         self._text_log.tag_config('err', foreground=ThemeManager.ACCENT_RED)
         self._text_log.tag_config('host', foreground=ThemeManager.TEXT_SECONDARY)
 
-        input_frame: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_PANEL)
-        input_frame.pack(fill=tk.X)
+        input_frame: Frame = Frame(self, bg=ThemeManager.BG_PANEL)
+        input_frame.pack(fill=X)
 
-        self._entry_cmd = ttk.Entry(input_frame)
-        self._entry_cmd.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self._entry_cmd = Entry(input_frame)
+        self._entry_cmd.pack(side=LEFT, fill=X, expand=True, padx=(0, 5))
         self._entry_cmd.bind('<Return>', lambda e: self._send())
 
-        btn_send: tk.Button = tk.Button(
+        btn_send: Button = Button(
             input_frame,
             text='Send',
             bg=ThemeManager.ACCENT_BLUE,
             fg='#11111b',
             font=(ThemeManager.FONT_FAMILY, 8, 'bold'),
-            relief=tk.FLAT,
+            relief=FLAT,
             command=self._send
         )
-        btn_send.pack(side=tk.RIGHT)
+        btn_send.pack(side=RIGHT)
 
     def append_log(self, message: str, tag: str = 'host') -> None:
         '''
@@ -172,8 +192,8 @@ class SerialConsolePanel(tk.LabelFrame):
             :exceptions: None.
         '''
         self._text_log.config(state='normal')
-        self._text_log.insert(tk.END, f'{message}\n', tag)
-        self._text_log.see(tk.END)
+        self._text_log.insert(END, f'{message}\n', tag)
+        self._text_log.see(END)
         self._text_log.config(state='disabled')
 
     def select_all(self) -> None:
@@ -182,9 +202,9 @@ class SerialConsolePanel(tk.LabelFrame):
 
             :exceptions: None.
         '''
-        self._text_log.tag_add(tk.SEL, '1.0', tk.END)
-        self._text_log.mark_set(tk.INSERT, '1.0')
-        self._text_log.see(tk.INSERT)
+        self._text_log.tag_add(SEL, '1.0', END)
+        self._text_log.mark_set(INSERT, '1.0')
+        self._text_log.see(INSERT)
         self._text_log.focus_set()
 
     def copy_log(self) -> None:
@@ -194,9 +214,9 @@ class SerialConsolePanel(tk.LabelFrame):
             :exceptions: None.
         '''
         try:
-            content: str = self._text_log.get(tk.SEL_FIRST, tk.SEL_LAST)
-        except tk.TclError:
-            content = self._text_log.get('1.0', tk.END).strip()
+            content: str = self._text_log.get(SEL_FIRST, SEL_LAST)
+        except TclError:
+            content = self._text_log.get('1.0', END).strip()
 
         if content:
             self.clipboard_clear()
@@ -209,7 +229,7 @@ class SerialConsolePanel(tk.LabelFrame):
             :exceptions: None.
         '''
         self._text_log.config(state='normal')
-        self._text_log.delete('1.0', tk.END)
+        self._text_log.delete('1.0', END)
         self._text_log.config(state='disabled')
 
     def _send(self) -> None:
@@ -220,5 +240,5 @@ class SerialConsolePanel(tk.LabelFrame):
         '''
         cmd = self._entry_cmd.get().strip()
         if cmd and self._on_send_cmd is not None:
-            self._entry_cmd.delete(0, tk.END)
+            self._entry_cmd.delete(0, END)
             self._on_send_cmd(cmd)

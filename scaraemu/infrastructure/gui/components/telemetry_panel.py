@@ -21,8 +21,8 @@ Info
 
 from __future__ import annotations
 
-import math
-import tkinter as tk
+from math import degrees
+from tkinter import BOTH, Frame, Label, LabelFrame, Widget
 
 from scaraemu.core.model.telemetry_dto import TelemetryDTO
 from scaraemu.infrastructure.gui.theme import ThemeManager
@@ -31,13 +31,13 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class TelemetryPanel(tk.LabelFrame):
+class TelemetryPanel(LabelFrame):
     '''
         Panel rendering live Cartesian, joint, and stepper step counts.
 
@@ -60,19 +60,19 @@ class TelemetryPanel(tk.LabelFrame):
                 | update_telemetry - Updates display values from TelemetryDTO.
     '''
 
-    _val_x: tk.Label
-    _val_y: tk.Label
-    _val_z: tk.Label
-    _val_phi: tk.Label
-    _val_q1: tk.Label
-    _val_q2: tk.Label
-    _val_q4: tk.Label
-    _val_s1: tk.Label
-    _val_s2: tk.Label
-    _val_sz: tk.Label
-    _val_s4: tk.Label
+    _val_x: Label
+    _val_y: Label
+    _val_z: Label
+    _val_phi: Label
+    _val_q1: Label
+    _val_q2: Label
+    _val_q4: Label
+    _val_s1: Label
+    _val_s2: Label
+    _val_sz: Label
+    _val_s4: Label
 
-    def __init__(self, parent: tk.Widget) -> None:
+    def __init__(self, parent: Widget) -> None:
         '''
             Initializes telemetry layout and widgets.
 
@@ -89,22 +89,22 @@ class TelemetryPanel(tk.LabelFrame):
             pady=8
         )
 
-        grid_frame: tk.Frame = tk.Frame(self, bg=ThemeManager.BG_PANEL)
-        grid_frame.pack(fill=tk.BOTH, expand=True)
+        grid_frame: Frame = Frame(self, bg=ThemeManager.BG_PANEL)
+        grid_frame.pack(fill=BOTH, expand=True)
 
         self._val_x = self._make_row(grid_frame, 0, 'X Pose:', '0.00 mm', ThemeManager.ACCENT_CYAN)
         self._val_y = self._make_row(grid_frame, 1, 'Y Pose:', '0.00 mm', ThemeManager.ACCENT_CYAN)
         self._val_z = self._make_row(grid_frame, 2, 'Z Height:', '0.00 mm', ThemeManager.ACCENT_CYAN)
         self._val_phi = self._make_row(grid_frame, 3, 'Tool Phi:', '0.00°', ThemeManager.ACCENT_CYAN)
 
-        sep: tk.Frame = tk.Frame(grid_frame, height=1, bg=ThemeManager.BORDER_COLOR)
+        sep: Frame = Frame(grid_frame, height=1, bg=ThemeManager.BORDER_COLOR)
         sep.grid(row=4, column=0, columnspan=2, sticky='ew', pady=5)
 
         self._val_q1 = self._make_row(grid_frame, 5, 'J1 (Theta1):', '0.00°', ThemeManager.ACCENT_BLUE)
         self._val_q2 = self._make_row(grid_frame, 6, 'J2 (Theta2):', '0.00°', ThemeManager.ACCENT_BLUE)
         self._val_q4 = self._make_row(grid_frame, 7, 'J4 (Theta4):', '0.00°', ThemeManager.ACCENT_BLUE)
 
-        sep2: tk.Frame = tk.Frame(grid_frame, height=1, bg=ThemeManager.BORDER_COLOR)
+        sep2: Frame = Frame(grid_frame, height=1, bg=ThemeManager.BORDER_COLOR)
         sep2.grid(row=8, column=0, columnspan=2, sticky='ew', pady=5)
 
         self._val_s1 = self._make_row(grid_frame, 9, 'Step J1:', '0', ThemeManager.ACCENT_YELLOW)
@@ -112,7 +112,7 @@ class TelemetryPanel(tk.LabelFrame):
         self._val_sz = self._make_row(grid_frame, 11, 'Step Z:', '0', ThemeManager.ACCENT_YELLOW)
         self._val_s4 = self._make_row(grid_frame, 12, 'Step J4:', '0', ThemeManager.ACCENT_YELLOW)
 
-    def _make_row(self, parent: tk.Frame, row: int, label_text: str, default_val: str, val_color: str) -> tk.Label:
+    def _make_row(self, parent: Frame, row: int, label_text: str, default_val: str, val_color: str) -> Label:
         '''
             Creates a standard label and value pair in the telemetry grid.
 
@@ -124,7 +124,7 @@ class TelemetryPanel(tk.LabelFrame):
             :return: The value Tkinter Label widget.
             :exceptions: None.
         '''
-        lbl: tk.Label = tk.Label(
+        lbl: Label = Label(
             parent,
             text=label_text,
             bg=ThemeManager.BG_PANEL,
@@ -134,7 +134,7 @@ class TelemetryPanel(tk.LabelFrame):
         )
         lbl.grid(row=row, column=0, sticky='w', pady=2)
 
-        val_lbl: tk.Label = tk.Label(
+        val_lbl: Label = Label(
             parent,
             text=default_val,
             bg=ThemeManager.BG_PANEL,
@@ -152,14 +152,17 @@ class TelemetryPanel(tk.LabelFrame):
             :param telem: Current TelemetryDTO snapshot.
             :exceptions: None.
         '''
+        if not self.winfo_ismapped():
+            return
+
         self._val_x.config(text=f'{telem.pose.x:.2f} mm')
         self._val_y.config(text=f'{telem.pose.y:.2f} mm')
         self._val_z.config(text=f'{telem.pose.z:.2f} mm')
-        self._val_phi.config(text=f'{math.degrees(telem.pose.phi):.2f}°')
+        self._val_phi.config(text=f'{degrees(telem.pose.phi):.2f}°')
 
-        self._val_q1.config(text=f'{math.degrees(telem.joints.theta1):.2f}°')
-        self._val_q2.config(text=f'{math.degrees(telem.joints.theta2):.2f}°')
-        self._val_q4.config(text=f'{math.degrees(telem.joints.theta4):.2f}°')
+        self._val_q1.config(text=f'{degrees(telem.joints.theta1):.2f}°')
+        self._val_q2.config(text=f'{degrees(telem.joints.theta2):.2f}°')
+        self._val_q4.config(text=f'{degrees(telem.joints.theta4):.2f}°')
 
         self._val_s1.config(text=f'{telem.steps.j1_steps:,}')
         self._val_s2.config(text=f'{telem.steps.j2_steps:,}')

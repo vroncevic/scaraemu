@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-import math
+from math import cos, pi, sin
 from typing import Callable, Final
 from scaraemu.core.model.scara_pose import ScaraPose
 
@@ -29,7 +29,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -37,7 +37,7 @@ __status__ = 'Updated'
 
 class TrajectoryDemoGenerator:
     '''
-        Generator of synthetic demonstration trajectories (Circle, Square, Star, Helix).
+        Generator of synthetic demonstration trajectories (Circle, Square, Star, Helix, Pick & Place).
 
         It defines:
 
@@ -50,9 +50,16 @@ class TrajectoryDemoGenerator:
                 | generate_square - Generates rectangular planar trajectory.
                 | generate_star - Generates 5-pointed star planar trajectory.
                 | generate_helix - Generates 3D helical trajectory.
+                | generate_pick_and_place - Generates 3D Pick and Place JUMP arch trajectory.
     '''
 
-    AVAILABLE_DEMOS: Final[tuple[str, ...]] = ('circle', 'square', 'star', 'helix')
+    AVAILABLE_DEMOS: Final[tuple[str, ...]] = (
+        'circle',
+        'square',
+        'star',
+        'helix',
+        'pick_and_place'
+    )
 
     @classmethod
     def generate(
@@ -76,7 +83,10 @@ class TrajectoryDemoGenerator:
             'circle': lambda: cls.generate_circle(center_x, center_y, radius=35.0, z=z),
             'square': lambda: cls.generate_square(center_x, center_y, side=60.0, z=z),
             'star': lambda: cls.generate_star(center_x, center_y, r_outer=45.0, r_inner=20.0, z=z),
-            'helix': lambda: cls.generate_helix(center_x, center_y, radius=30.0, z_start=10.0, z_end=70.0)
+            'helix': lambda: cls.generate_helix(center_x, center_y, radius=30.0, z_start=10.0, z_end=70.0),
+            'pick_and_place': lambda: cls.generate_pick_and_place(
+                center_x - 20.0, center_y - 30.0, center_x + 20.0, center_y + 30.0
+            )
         }
         gen = generators.get(demo_name.lower())
         return gen() if gen is not None else []
@@ -103,9 +113,9 @@ class TrajectoryDemoGenerator:
         '''
         poses: list[ScaraPose] = []
         for i in range(num_points + 1):
-            angle: float = 2.0 * math.pi * (i / num_points)
-            px: float = center_x + radius * math.cos(angle)
-            py: float = center_y + radius * math.sin(angle)
+            angle: float = 2.0 * pi * (i / num_points)
+            px: float = center_x + radius * cos(angle)
+            py: float = center_y + radius * sin(angle)
             poses.append(ScaraPose(x=px, y=py, z=z, phi=0.0))
         return poses
 
@@ -159,10 +169,10 @@ class TrajectoryDemoGenerator:
         '''
         poses: list[ScaraPose] = []
         for i in range(11):
-            angle: float = math.pi / 2.0 + (i * math.pi / 5.0)
+            angle: float = pi / 2.0 + (i * pi / 5.0)
             rad: float = r_outer if i % 2 == 0 else r_inner
-            px: float = center_x + rad * math.cos(angle)
-            py: float = center_y + rad * math.sin(angle)
+            px: float = center_x + rad * cos(angle)
+            py: float = center_y + rad * sin(angle)
             poses.append(ScaraPose(x=px, y=py, z=z, phi=0.0))
         return poses
 
@@ -194,9 +204,41 @@ class TrajectoryDemoGenerator:
         z_range: float = z_end - z_start
         for i in range(num_points + 1):
             t: float = i / num_points
-            angle: float = 2.0 * math.pi * turns * t
-            px: float = center_x + radius * math.cos(angle)
-            py: float = center_y + radius * math.sin(angle)
+            angle: float = 2.0 * pi * turns * t
+            px: float = center_x + radius * cos(angle)
+            py: float = center_y + radius * sin(angle)
             pz: float = z_start + z_range * t
             poses.append(ScaraPose(x=px, y=py, z=pz, phi=0.0))
         return poses
+
+    @classmethod
+    def generate_pick_and_place(
+        cls,
+        x1: float = 140.0,
+        y1: float = -30.0,
+        x2: float = 180.0,
+        y2: float = 30.0,
+        z_pick: float = 5.0,
+        z_arch: float = 35.0,
+    ) -> list[ScaraPose]:
+        '''
+            Generates 3D Pick and Place JUMP arch trajectory.
+
+            :param x1: Source X coordinate in mm.
+            :param y1: Source Y coordinate in mm.
+            :param x2: Target X coordinate in mm.
+            :param y2: Target Y coordinate in mm.
+            :param z_pick: Low pick/place height in mm.
+            :param z_arch: Clearance arch height in mm.
+            :return: List of ScaraPose waypoints.
+            :exceptions: None.
+        '''
+        return [
+            ScaraPose(x=x1, y=y1, z=z_arch, phi=0.0),
+            ScaraPose(x=x1, y=y1, z=z_pick, phi=0.0),
+            ScaraPose(x=x1, y=y1, z=z_arch, phi=0.0),
+            ScaraPose(x=(x1 + x2) / 2.0, y=(y1 + y2) / 2.0, z=z_arch + 10.0, phi=0.0),
+            ScaraPose(x=x2, y=y2, z=z_arch, phi=0.0),
+            ScaraPose(x=x2, y=y2, z=z_pick, phi=0.0),
+            ScaraPose(x=x2, y=y2, z=z_arch, phi=0.0),
+        ]

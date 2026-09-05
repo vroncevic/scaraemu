@@ -2,7 +2,7 @@
 
 '''
 Module
-    iservice.py
+    ivirtual_robot_server.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,15 +16,12 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Defines interface IService for SCARA domain service facade.
+    Interface protocol for digital twin virtual robot TCP firmware emulator server.
 '''
 
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
-
-from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -37,38 +34,48 @@ __status__ = 'Updated'
 
 
 @runtime_checkable
-class IService(Protocol):
+class IVirtualRobotServer(Protocol):
     '''
-        Interface for orchestrating SCARA kinematics and emulation services.
+        Protocol defining operations for a digital twin virtual robot TCP server.
 
         It defines:
 
             :methods:
-                | is_initialized - Checks if all sub-services are initialized.
-                | get_kinematics - Returns active IKinematicsService.
-                | get_emulator - Returns active IEmulatorService.
+                | start - Starts listening for external host connections.
+                | stop - Terminates background server and closes client sockets.
+                | is_running - Checks whether server is currently active.
+                | get_port - Returns the active listening port number.
     '''
 
-    def is_initialized(self) -> bool:
+    def start(self, *, host: str = '127.0.0.1', port: int = 8888) -> bool:
         '''
-            Checks if all sub-services are initialized.
+            Starts listening for external host connections.
 
-            :return: True if initialized, False otherwise.
+            :param host: Local IP bind address.
+            :param port: TCP listening port number.
+            :return: True if server started successfully, False otherwise.
             :exceptions: None.
         '''
 
-    def get_kinematics(self) -> IKinematicsService:
+    def stop(self) -> None:
         '''
-            Returns active IKinematicsService.
+            Terminates background server and closes client sockets.
 
-            :return: IKinematicsService instance.
             :exceptions: None.
         '''
 
-    def get_emulator(self) -> IEmulatorService:
+    def is_running(self) -> bool:
         '''
-            Returns active IEmulatorService.
+            Checks whether server is currently active.
 
-            :return: IEmulatorService instance.
+            :return: True if listening, False otherwise.
+            :exceptions: None.
+        '''
+
+    def get_port(self) -> int:
+        '''
+            Returns the active listening port number.
+
+            :return: Port integer.
             :exceptions: None.
         '''

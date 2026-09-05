@@ -2,7 +2,7 @@
 
 '''
 Module
-    iservice.py
+    iscara_script_loader.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,15 +16,14 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Defines interface IService for SCARA domain service facade.
+    Interface protocol for parsing and loading .scara DSL scripts into emulator poses.
 '''
 
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
+from scaraemu.core.model.scara_pose import ScaraPose
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -37,38 +36,31 @@ __status__ = 'Updated'
 
 
 @runtime_checkable
-class IService(Protocol):
+class IScaraScriptLoader(Protocol):
     '''
-        Interface for orchestrating SCARA kinematics and emulation services.
+        Protocol defining operations for converting .scara scripts or plans into ScaraPose trajectories.
 
         It defines:
 
             :methods:
-                | is_initialized - Checks if all sub-services are initialized.
-                | get_kinematics - Returns active IKinematicsService.
-                | get_emulator - Returns active IEmulatorService.
+                | load_from_file - Reads and parses script or plan from filesystem.
+                | parse_script - Parses raw script text content into sequence of poses.
     '''
 
-    def is_initialized(self) -> bool:
+    def load_from_file(self, *, filepath: str) -> list[ScaraPose]:
         '''
-            Checks if all sub-services are initialized.
+            Reads and parses a script or plan file from the filesystem.
 
-            :return: True if initialized, False otherwise.
-            :exceptions: None.
-        '''
-
-    def get_kinematics(self) -> IKinematicsService:
-        '''
-            Returns active IKinematicsService.
-
-            :return: IKinematicsService instance.
-            :exceptions: None.
+            :param filepath: Path to .scara or .json trajectory plan file.
+            :return: List of ScaraPose waypoints.
+            :exceptions: OSError, ValueError.
         '''
 
-    def get_emulator(self) -> IEmulatorService:
+    def parse_script(self, *, source: str) -> list[ScaraPose]:
         '''
-            Returns active IEmulatorService.
+            Parses raw script text content into sequence of ScaraPose waypoints.
 
-            :return: IEmulatorService instance.
-            :exceptions: None.
+            :param source: SCARA DSL source text.
+            :return: List of ScaraPose waypoints.
+            :exceptions: ValueError.
         '''

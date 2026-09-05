@@ -21,8 +21,16 @@ Info
 
 from __future__ import annotations
 
-import tkinter as tk
-from tkinter import ttk
+from tkinter import (
+    BOTH,
+    HORIZONTAL,
+    X,
+    Frame,
+    PanedWindow,
+    TclError,
+    Tk,
+)
+from tkinter.ttk import Notebook, Style
 from typing import Final
 
 from scaraemu.core.service.iservice import IService
@@ -37,6 +45,7 @@ from scaraemu.infrastructure.gui.components.telemetry_panel import TelemetryPane
 from scaraemu.infrastructure.gui.components.jog_panel import JogPanel
 from scaraemu.infrastructure.gui.components.trajectory_demo_panel import TrajectoryDemoPanel
 from scaraemu.infrastructure.gui.components.serial_console_panel import SerialConsolePanel
+from scaraemu.infrastructure.communication.transport.virtual_robot_server import VirtualRobotServer
 from scaraemu.infrastructure.gui.hardware_bridge_controller import HardwareBridgeController
 from scaraemu.infrastructure.gui.gui_event_handler import GuiEventHandler
 
@@ -44,7 +53,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -59,20 +68,29 @@ class ScaraEmuGUI(IGUI):
             :attributes:
                 | _service - Kinematics and emulator simulation service facade.
                 | _bridge - Hardware communication bridge controller.
+                | _initial_script - Optional initial script to parse on launch.
+                | _initial_server - Optional TCP port for virtual server on launch.
+                | _virtual_server - Virtual robot TCP server instance.
                 | _root - Root Tkinter window.
+                | _serial_bar - Top connection and server control toolbar.
                 | _canvas_xy - Top-down planar canvas.
                 | _canvas_z - Side elevation canvas.
                 | _telemetry_panel - Telemetry readout monitor.
                 | _demo_panel - Autonomous trajectory demo panel.
+                | _console_panel - Host and bridge serial log console.
             :methods:
                 | __init__ - Initializes GUI adapter with service and transport dependencies.
                 | is_initialized - Returns initialization status.
+                | _toggle_virtual_server - Starts or stops virtual robot TCP server.
                 | run - Constructs Tkinter windows and starts event loop.
     '''
 
     _service: Final[IService]
     _bridge: Final[HardwareBridgeController]
-    _root: tk.Tk | None
+    _initial_script: str | None
+    _initial_server: int | None
+    _virtual_server: VirtualRobotServer | None
+    _root: Tk | None
     _serial_bar: SerialBar | None
     _canvas_xy: CanvasXY | None
     _canvas_z: CanvasZ | None
@@ -83,13 +101,17 @@ class ScaraEmuGUI(IGUI):
     def __init__(
         self,
         service: IService,
-        transport: ITransport
+        transport: ITransport,
+        initial_script: str | None = None,
+        initial_server: int | None = None
     ) -> None:
         '''
             Initializes GUI adapter with service and transport dependencies.
 
             :param service: Simulation and kinematics facade.
             :param transport: Communication transport instance.
+            :param initial_script: Optional path to script to load on startup.
+            :param initial_server: Optional TCP port to start virtual server on.
             :exceptions: None.
         '''
         self._service = service
@@ -99,6 +121,9 @@ class ScaraEmuGUI(IGUI):
             on_telemetry=self._on_hardware_telemetry,
             on_elbow_change=self._on_hardware_elbow_change
         )
+        self._initial_script = initial_script
+        self._initial_server = initial_server
+        self._virtual_server = None
         self._root = None
         self._serial_bar = None
         self._canvas_xy = None
@@ -116,13 +141,22 @@ class ScaraEmuGUI(IGUI):
         '''
         return bool(self._service and self._bridge)
 
+    def load_file(self, file_path: str) -> None:
+        '''
+            Sets initial plan or DSL script to load upon GUI startup.
+
+            :param file_path: Path to script or plan file.
+            :exceptions: None.
+        '''
+        self._initial_script = file_path
+
     def run(self) -> None:
         '''
             Constructs Tkinter widgets, layouts, and starts event loop.
 
             :exceptions: None.
         '''
-        self._root = tk.Tk()
+        self._root = Tk()
         self._root.title('SCARA Robot 4-DOF Emulator & Visualizer')
         sw: int = self._root.winfo_screenwidth()
         sh: int = self._root.winfo_screenheight()
@@ -130,21 +164,25 @@ class ScaraEmuGUI(IGUI):
         self._root.minsize(980, 680)
         self._root.configure(bg=ThemeManager.BG_DARK)
 
-        self._serial_bar = SerialBar(self._root, on_connect_toggle=self._bridge.handle_connect_toggle)
-        self._serial_bar.pack(fill=tk.X)
+        self._serial_bar = SerialBar(
+            self._root,
+            on_connect_toggle=self._bridge.handle_connect_toggle,
+            on_server_toggle=self._toggle_virtual_server
+        )
+        self._serial_bar.pack(fill=X)
 
-        main_paned = tk.PanedWindow(self._root, orient=tk.HORIZONTAL, bg=ThemeManager.BG_DARK, bd=0, sashwidth=4)
-        main_paned.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        main_paned = PanedWindow(self._root, orient=HORIZONTAL, bg=ThemeManager.BG_DARK, bd=0, sashwidth=4)
+        main_paned.pack(fill=BOTH, expand=True, padx=8, pady=8)
 
-        left_col: tk.Frame = tk.Frame(main_paned, bg=ThemeManager.BG_DARK)
+        left_col: Frame = Frame(main_paned, bg=ThemeManager.BG_DARK)
         main_paned.add(left_col, stretch='always')
 
         geom = self._service.get_kinematics().get_geometry()
         self._canvas_xy = CanvasXY(left_col, geometry=geom)
-        self._canvas_xy.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
+        self._canvas_xy.pack(fill=BOTH, expand=True, pady=(0, 6))
 
         self._canvas_z = CanvasZ(left_col, geometry=geom, height=180)
-        self._canvas_z.pack(fill=tk.X)
+        self._canvas_z.pack(fill=X)
 
         event_handler = GuiEventHandler(
             service=self._service,
@@ -156,22 +194,40 @@ class ScaraEmuGUI(IGUI):
         self._canvas_xy.set_on_target_click(event_handler.handle_xy_click)
         self._canvas_z.set_on_target_click(event_handler.handle_z_click)
 
-        right_col: tk.Frame = tk.Frame(main_paned, bg=ThemeManager.BG_DARK, width=390)
+        right_col: Frame = Frame(main_paned, bg=ThemeManager.BG_DARK, width=390)
         main_paned.add(right_col, stretch='never')
 
-        notebook = ttk.Notebook(right_col)
-        notebook.pack(fill=tk.BOTH, expand=True)
+        style = Style(self._root)
+        style.theme_use('clam')
+        style.configure('TNotebook', background=ThemeManager.BG_DARK, borderwidth=0)
+        style.configure(
+            'TNotebook.Tab',
+            background=ThemeManager.BG_PANEL,
+            foreground=ThemeManager.TEXT_SECONDARY,
+            font=(ThemeManager.FONT_FAMILY, 9, 'bold'),
+            padding=[12, 5],
+            focuscolor=ThemeManager.BG_DARK
+        )
+        style.map(
+            'TNotebook.Tab',
+            background=[('selected', ThemeManager.BG_CANVAS), ('active', ThemeManager.BG_PANEL)],
+            foreground=[('selected', ThemeManager.ACCENT_CYAN), ('active', ThemeManager.TEXT_PRIMARY)]
+        )
 
-        tab_control: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
-        tab_demo: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
-        tab_console: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
+        notebook = Notebook(right_col)
+        notebook.pack(fill=BOTH, expand=True)
+        notebook.bind('<<NotebookTabChanged>>', lambda e: notebook.update_idletasks())
+
+        tab_control: Frame = Frame(notebook, bg=ThemeManager.BG_DARK)
+        tab_demo: Frame = Frame(notebook, bg=ThemeManager.BG_DARK)
+        tab_console: Frame = Frame(notebook, bg=ThemeManager.BG_DARK)
 
         notebook.add(tab_control, text='  Monitor & Jog  ')
         notebook.add(tab_demo, text='  Trajectories  ')
         notebook.add(tab_console, text='  Serial Console  ')
 
         self._telemetry_panel = TelemetryPanel(tab_control)
-        self._telemetry_panel.pack(fill=tk.X, pady=(0, 6))
+        self._telemetry_panel.pack(fill=X, pady=(0, 6))
 
         def _toggle_hold() -> None:
             emu = self._service.get_emulator()
@@ -192,31 +248,64 @@ class ScaraEmuGUI(IGUI):
             on_toggle_hold=_toggle_hold,
             on_estop=event_handler.handle_estop
         )
-        jog_panel.pack(fill=tk.X)
+        jog_panel.pack(fill=X)
 
         self._demo_panel = TrajectoryDemoPanel(
             tab_demo,
             on_demo_select=event_handler.handle_demo_select,
-            on_clear_queue=lambda: (self._service.get_emulator().clear_queue(), self._bridge.clear_queue())
+            on_clear_queue=lambda: (self._service.get_emulator().clear_queue(), self._bridge.clear_queue()),
+            on_load_script=event_handler.handle_load_script
         )
-        self._demo_panel.pack(fill=tk.X, pady=(0, 6))
+        self._demo_panel.pack(fill=X, pady=(0, 6))
 
         self._console_panel = SerialConsolePanel(tab_console, on_send_cmd=self._bridge.handle_manual_send)
-        self._console_panel.pack(fill=tk.BOTH, expand=True)
+        self._console_panel.pack(fill=BOTH, expand=True)
 
         self._bridge.set_log_listener(self._console_panel.append_log)
 
         self._root.update_idletasks()
         try:
             self._root.attributes('-zoomed', True)
-        except tk.TclError:
+        except TclError:
             try:
                 self._root.state('zoomed')
-            except tk.TclError:
+            except TclError:
                 pass
+
+        if self._initial_server:
+            self._toggle_virtual_server()
+
+        if self._initial_script:
+            event_handler.handle_load_script(self._initial_script)
 
         self._schedule_tick()
         self._root.mainloop()
+
+    def _toggle_virtual_server(self) -> None:
+        '''
+            Starts or stops background TCP virtual robot server.
+
+            :exceptions: None.
+        '''
+        if self._virtual_server is not None and self._virtual_server.is_running():
+            self._virtual_server.stop()
+            if self._serial_bar is not None:
+                self._serial_bar.set_server_state(False)
+            self._log_host('[HOST]: Virtual Robot Server stopped.', 'info')
+        else:
+            if self._virtual_server is None:
+                self._virtual_server = VirtualRobotServer(
+                    emulator=self._service.get_emulator(),
+                    on_log=lambda msg: self._log_host(msg, 'info')
+                )
+            port: int = self._initial_server if self._initial_server else 8888
+            success: bool = self._virtual_server.start(port=port)
+            if self._serial_bar is not None:
+                self._serial_bar.set_server_state(success, port)
+            if success:
+                self._log_host(f'[HOST]: Virtual Robot Server listening on 127.0.0.1:{port}', 'info')
+            else:
+                self._log_host(f'[HOST]: Failed to start Virtual Robot Server on port {port}', 'err')
 
     def _schedule_tick(self) -> None:
         '''

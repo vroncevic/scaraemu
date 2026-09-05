@@ -30,19 +30,18 @@ from scaraemu.core.model.scara_joints import ScaraJoints
 from scaraemu.core.model.telemetry_dto import TelemetryDTO
 from scaraemu.core.model.simulation_state_dto import SimulationStateDTO
 from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class EmulatorService(IEmulatorService):
+class EmulatorService:
     '''
         Trajectory queue simulation and real-time motion playback engine.
 

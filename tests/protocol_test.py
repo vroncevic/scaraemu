@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-import unittest
+from unittest import TestCase, main as unittest_main
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.infrastructure.communication.protocol.command_formatter import CommandFormatter
 from scaraemu.infrastructure.communication.protocol.protocol_parser import ProtocolParser
@@ -30,13 +30,13 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class TestProtocol(unittest.TestCase):
+class TestProtocol(TestCase):
     '''Unit test cases for protocol encoding and decoding.'''
 
     def test_command_formatting(self) -> None:
@@ -122,6 +122,22 @@ class TestProtocol(unittest.TestCase):
         self.assertEqual(nack_resp.response_type, 'BUFFER_FULL')
         self.assertFalse(nack_resp.is_success)
 
+        override_resp = ProtocolParser.parse_line('<RESP:ACK#OVERRIDE=80>')
+        self.assertEqual(override_resp.response_type, 'OVERRIDE')
+        self.assertTrue(override_resp.is_success)
+
+        wait_resp = ProtocolParser.parse_line('<RESP:ACK#WAIT_DONE#MS=250>')
+        self.assertEqual(wait_resp.response_type, 'WAIT_DONE')
+        self.assertTrue(wait_resp.is_success)
+
+        pump_resp = ProtocolParser.parse_line('<RESP:ACK#PUMP_ON>')
+        self.assertEqual(pump_resp.response_type, 'PUMP')
+        self.assertTrue(pump_resp.is_success)
+
+        valve_resp = ProtocolParser.parse_line('<RESP:ACK#VALVE_OFF>')
+        self.assertEqual(valve_resp.response_type, 'VALVE')
+        self.assertTrue(valve_resp.is_success)
+
     def test_ack_err_log_parsing(self) -> None:
         '''Tests decoding ACK, ERR, and general log lines.'''
         ack_resp = ProtocolParser.parse_line('<ACK:MOVE_STARTED>')
@@ -138,4 +154,4 @@ class TestProtocol(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest_main()

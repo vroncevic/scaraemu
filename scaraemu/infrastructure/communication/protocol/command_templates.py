@@ -27,7 +27,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -51,6 +51,22 @@ class CommandTemplates:
                 | cmd_status - Template for retrieving device status.
                 | cmd_hold - Template for feed-hold pause command.
                 | cmd_resume - Template for motion resume command.
+                | cmd_get_config - Template for retrieving runtime kinematics config.
+                | cmd_save_config - Template for persisting config to Flash.
+                | cmd_set_config - Template for runtime kinematics configuration.
+                | cmd_set_dynamics - Template for motion acceleration configuration.
+                | cmd_set_homing - Template for homing offset calibration.
+                | cmd_set_limits - Template for angular joint limit boundaries.
+                | cmd_set_steps - Template for transmission gear ratio configuration.
+                | cmd_set_elbow - Template for elbow configuration mode.
+                | cmd_get_elbow - Template for querying elbow mode.
+                | cmd_pump_on - Template for activating vacuum pump.
+                | cmd_pump_off - Template for deactivating vacuum pump.
+                | cmd_valve_on - Template for opening release valve.
+                | cmd_valve_off - Template for closing release valve.
+                | cmd_override - Template for feedrate speed override scaling.
+                | cmd_wait - Template for dwell delay wait.
+                | cmd_jog - Template for manual axis jog step.
     '''
 
     point_move: str = '<pt#{x:.2f}#{y:.2f}#{z:.2f}#{phi:.2f}#{speed:.1f}#end>'
@@ -75,4 +91,11 @@ class CommandTemplates:
     cmd_set_steps: str = '<CMD:SET_STEPS#GR_J1={gr_j1:.2f}#GR_J2={gr_j2:.2f}#GR_J4={gr_j4:.2f}#LEAD_Z={lead_z:.2f}>'
     cmd_set_elbow: str = '<CMD:SET_ELBOW#{elbow}>'
     cmd_get_elbow: str = '<CMD:GET_ELBOW>'
+    cmd_pump_on: str = '<CMD:PUMP#1>'
+    cmd_pump_off: str = '<CMD:PUMP#0>'
+    cmd_valve_on: str = '<CMD:VALVE#1>'
+    cmd_valve_off: str = '<CMD:VALVE#0>'
+    cmd_override: str = '<CMD:OVERRIDE#{percent:d}>'
+    cmd_wait: str = '<CMD:WAIT#{delay_ms:d}>'
+    cmd_jog: str = '<CMD:JOG#{axis}#{step:.1f}>'
 

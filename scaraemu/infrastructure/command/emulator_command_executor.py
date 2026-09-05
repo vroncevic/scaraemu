@@ -33,7 +33,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -85,6 +85,10 @@ class EmulatorCommandExecutor:
             }
 
         try:
+            file_path: object = params.get('file')
+            if file_path is not None and isinstance(file_path, str) and file_path:
+                self.gui.load_file(file_path)
+
             self.gui.run()
             return {'returncode': 0, 'stdout': 'Emulator closed successfully', 'stderr': ''}
 

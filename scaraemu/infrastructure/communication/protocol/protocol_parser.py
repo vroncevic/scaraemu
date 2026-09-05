@@ -30,7 +30,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -130,6 +130,18 @@ class ProtocolParser:
                 resp_type = 'ELBOW'
             case ('ACK', _) if 'ELBOW' in secondary_token:
                 resp_type = 'ELBOW'
+            case ('ACK', _) if 'OVERRIDE' in secondary_token:
+                resp_type = 'OVERRIDE'
+            case ('ACK', _) if 'WAIT_DONE' in secondary_token:
+                resp_type = 'WAIT_DONE'
+            case ('ACK', _) if 'PUMP' in secondary_token:
+                resp_type = 'PUMP'
+            case ('ACK', _) if 'VALVE' in secondary_token:
+                resp_type = 'VALVE'
+            case ('WAIT_DONE', _):
+                resp_type = 'WAIT_DONE'
+            case ('OVERRIDE', _):
+                resp_type = 'OVERRIDE'
             case (tok, _) if 'BUFFER_FULL' in tok:
                 resp_type = 'BUFFER_FULL'
             case (tok, _) if 'NACK' in tok:

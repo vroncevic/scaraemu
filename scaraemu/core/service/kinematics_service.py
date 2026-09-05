@@ -29,19 +29,18 @@ from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.model.scara_joints import ScaraJoints
 from scaraemu.core.model.scara_step_coords import ScaraStepCoords
 from scaraemu.core.model.kinematics_config_dto import KinematicsConfigDTO
-from scaraemu.core.service.ikinematics_service import IKinematicsService
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class KinematicsService(IKinematicsService):
+class KinematicsService:
     '''
         Analytical Forward and Inverse Kinematics solver for 4-DOF SCARA robot.
 
