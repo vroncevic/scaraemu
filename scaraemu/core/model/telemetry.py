@@ -2,7 +2,7 @@
 
 '''
 Module
-    firmware_response_dto.py
+    telemetry.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,13 +16,16 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Data Transfer Object for parsed firmware response packets.
+    Defines SCARA live telemetry state Data Transfer Object.
 '''
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
+from scaraemu.core.model.scara_pose import ScaraPose
+from scaraemu.core.model.scara_joints import ScaraJoints
+from scaraemu.core.model.scara_step_coords import ScaraStepCoords
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -35,20 +38,26 @@ __status__ = 'Updated'
 
 
 @dataclass(frozen=True, slots=True)
-class FirmwareResponseDTO:
+class Telemetry:
     '''
-        Structured representation of incoming firmware serial lines.
+        Snapshot of full kinematic, Cartesian, and step telemetry data.
 
         It defines:
 
             :attributes:
-                | raw_line - Original unmodified text line.
-                | response_type - Type classification ('ACK', 'ERROR', 'STATUS', 'TELEM', 'LOG').
-                | is_success - True if command was successfully processed.
-                | payload - Extracted parsed fields or telemetry dictionary.
+                | pose - Cartesian ScaraPose.
+                | joints - Joint angle ScaraJoints.
+                | steps - Stepper pulse ScaraStepCoords.
+                | is_hardware_connected - Hardware bridge active status flag.
+                | motors_enabled - Stepper driver power enable status.
+                | estop_active - Emergency stop active status flag.
+                | hold_active - Feed-hold pause active status flag.
     '''
 
-    raw_line: str
-    response_type: str
-    is_success: bool = True
-    payload: dict[str, Any] | None = None
+    pose: ScaraPose
+    joints: ScaraJoints
+    steps: ScaraStepCoords
+    is_hardware_connected: bool = False
+    motors_enabled: bool = True
+    estop_active: bool = False
+    hold_active: bool = False

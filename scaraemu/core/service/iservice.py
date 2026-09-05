@@ -54,7 +54,6 @@ class IService(Protocol):
             Checks if all sub-services are initialized.
 
             :return: True if initialized, False otherwise.
-            :exceptions: None.
         '''
 
     def get_kinematics(self) -> IKinematicsService:
@@ -62,7 +61,6 @@ class IService(Protocol):
             Returns active IKinematicsService.
 
             :return: IKinematicsService instance.
-            :exceptions: None.
         '''
 
     def get_emulator(self) -> IEmulatorService:
@@ -70,5 +68,4 @@ class IService(Protocol):
             Returns active IEmulatorService.
 
             :return: IEmulatorService instance.
-            :exceptions: None.
         '''

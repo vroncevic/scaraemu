@@ -28,7 +28,7 @@ from scaraemu.core.model.scara_geometry import ScaraGeometry
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.model.scara_joints import ScaraJoints
 from scaraemu.core.model.scara_step_coords import ScaraStepCoords
-from scaraemu.core.model.kinematics_config_dto import KinematicsConfigDTO
+from scaraemu.core.model.kinematics_config import KinematicsConfig
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -69,7 +69,7 @@ class KinematicsService:
     TWO_PI: ClassVar[float] = 2.0 * pi
 
     _geometry: ScaraGeometry
-    _config: KinematicsConfigDTO
+    _config: KinematicsConfig
     _steps_per_rad_j1: float
     _steps_per_rad_j2: float
     _steps_per_rad_j4: float
@@ -78,7 +78,7 @@ class KinematicsService:
     def __init__(
         self,
         geometry: ScaraGeometry | None = None,
-        config: KinematicsConfigDTO | None = None
+        config: KinematicsConfig | None = None
     ) -> None:
         '''
             Initializes the kinematic solver with geometry and transmission specs.
@@ -88,7 +88,7 @@ class KinematicsService:
             :exceptions: None.
         '''
         self._geometry = geometry if geometry is not None else ScaraGeometry()
-        self._config = config if config is not None else KinematicsConfigDTO()
+        self._config = config if config is not None else KinematicsConfig()
         self._recompute_constants()
 
     def _recompute_constants(self) -> None:

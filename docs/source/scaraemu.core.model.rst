@@ -7,13 +7,13 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   scaraemu.core.model.kinematics_config_dto
+   scaraemu.core.model.kinematics_config
    scaraemu.core.model.scara_geometry
    scaraemu.core.model.scara_joints
    scaraemu.core.model.scara_pose
    scaraemu.core.model.scara_step_coords
-   scaraemu.core.model.simulation_state_dto
-   scaraemu.core.model.telemetry_dto
+   scaraemu.core.model.simulation_state
+   scaraemu.core.model.telemetry
 
 Module contents
 ---------------

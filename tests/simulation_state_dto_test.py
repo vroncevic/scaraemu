@@ -16,14 +16,14 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Unit tests for SimulationStateDTO model.
+    Unit tests for SimulationState model.
 '''
 
 from __future__ import annotations
 
 import unittest
 from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.core.model.simulation_state_dto import SimulationStateDTO
+from scaraemu.core.model.simulation_state import SimulationState
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -36,12 +36,12 @@ __status__ = 'Updated'
 
 
 class TestSimulationStateDTO(unittest.TestCase):
-    '''Unit test cases for SimulationStateDTO model.'''
+    '''Unit test cases for SimulationState model.'''
 
     def test_simulation_state_dto(self) -> None:
         '''Tests animation and queue state fields.'''
         tgt = ScaraPose(x=120.0, y=30.0, z=5.0)
-        dto = SimulationStateDTO(
+        dto = SimulationState(
             is_animating=True,
             queue_depth=12,
             trail_points=((100.0, 0.0), (110.0, 15.0)),

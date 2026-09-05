@@ -50,7 +50,6 @@ class IGUI(Protocol):
             Returns initialization status.
 
             :return: True if GUI is initialized, False otherwise.
-            :exceptions: None.
         '''
 
     def load_file(self, file_path: str) -> None:
@@ -58,12 +57,9 @@ class IGUI(Protocol):
             Sets initial plan or DSL script to load upon GUI startup.
 
             :param file_path: Path to script or plan file.
-            :exceptions: None.
         '''
 
     def run(self) -> None:
         '''
             Starts the Tkinter main event loop.
-
-            :exceptions: None.
         '''

@@ -131,13 +131,13 @@ Tool structure
          │   ├── __init__.py
          │   ├── model/
          │   │   ├── __init__.py
-         │   │   ├── kinematics_config_dto.py
+         │   │   ├── kinematics_config.py
          │   │   ├── scara_geometry.py
          │   │   ├── scara_joints.py
          │   │   ├── scara_pose.py
          │   │   ├── scara_step_coords.py
-         │   │   ├── simulation_state_dto.py
-         │   │   └── telemetry_dto.py
+         │   │   ├── simulation_state.py
+         │   │   └── telemetry.py
          │   └── service/
          │       ├── demo_generator.py
          │       ├── emulator_service.py
@@ -179,7 +179,7 @@ Tool structure
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
          │   │   │   ├── config_command_formatter.py
-         │   │   │   ├── firmware_response_dto.py
+         │   │   │   ├── firmware_response.py
          │   │   │   ├── __init__.py
          │   │   │   ├── motion_command_formatter.py
          │   │   │   └── protocol_parser.py
@@ -264,7 +264,7 @@ Tool structure
          ┌────────────┴────────────┬────────────────────────┐                           │ Uses
          ▼                         ▼                        ▼                           ▼
 ┌──────────────────┐      ┌──────────────────┐     ┌─────────────────┐     ┌─────────────────────────┐
-│KinematicsService │      │TrajectoryDemoGen.│     │ CommandTemplates│     │  FirmwareResponseDTO    │
+│KinematicsService │      │TrajectoryDemoGen.│     │ CommandTemplates│     │  FirmwareResponse    │
 │(Forward / Inverse│      │ (Pick&Place/JUMP)│     │(Syntax Alignment│     └─────────────────────────┘
 └──────────────────┘      └──────────────────┘     └─────────────────┘
 ```
@@ -281,7 +281,7 @@ Tool structure
 * **I — Interface Segregation Principle (ISP)**:
   * Role-specific interfaces ensure components only bind to methods they consume. Validated by `isp_checker.py`.
 * **D — Dependency Inversion Principle (DIP)**:
-  * Presentation and bridge controllers depend exclusively on abstractions (`IKinematicsService`, `IEmulatorService`) and immutable domain DTOs (`ScaraPose`, `ScaraJoints`, `TelemetryDTO`).
+  * Presentation and bridge controllers depend exclusively on abstractions (`IKinematicsService`, `IEmulatorService`) and immutable domain DTOs (`ScaraPose`, `ScaraJoints`, `Telemetry`).
 
 ##### Automated Quality Gates (`run_quality_gates.sh`)
 
@@ -327,13 +327,13 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/model/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/core/model/kinematics_config_dto.py` | 18 | 0 | 100%|
+| `scaraemu/core/model/kinematics_config.py` | 18 | 0 | 100%|
 | `scaraemu/core/model/scara_geometry.py` | 37 | 0 | 100%|
 | `scaraemu/core/model/scara_joints.py` | 17 | 0 | 100%|
 | `scaraemu/core/model/scara_pose.py` | 16 | 0 | 100%|
 | `scaraemu/core/model/scara_step_coords.py` | 16 | 0 | 100%|
-| `scaraemu/core/model/simulation_state_dto.py` | 17 | 0 | 100%|
-| `scaraemu/core/model/telemetry_dto.py` | 22 | 0 | 100%|
+| `scaraemu/core/model/simulation_state.py` | 17 | 0 | 100%|
+| `scaraemu/core/model/telemetry.py` | 22 | 0 | 100%|
 | `scaraemu/core/service/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/demo_generator.py` | 58 | 0 | 100%|
 | `scaraemu/core/service/emulator_service.py` | 123 | 15 | 88%|
@@ -369,7 +369,7 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/infrastructure/communication/protocol/command_formatter.py` | 12 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/command_templates.py` | 38 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/config_command_formatter.py` | 37 | 8 | 78%|
-| `scaraemu/infrastructure/communication/protocol/firmware_response_dto.py` | 17 | 0 | 100%|
+| `scaraemu/infrastructure/communication/protocol/firmware_response.py` | 17 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/motion_command_formatter.py` | 51 | 3 | 94%|
 | `scaraemu/infrastructure/communication/protocol/protocol_parser.py` | 116 | 16 | 86%|
 | `scaraemu/infrastructure/communication/serial_device_preferences.py` | 40 | 20 | 50%|

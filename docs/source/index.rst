@@ -120,13 +120,13 @@ Tool structure
          │   ├── __init__.py
          │   ├── model/
          │   │   ├── __init__.py
-         │   │   ├── kinematics_config_dto.py
+         │   │   ├── kinematics_config.py
          │   │   ├── scara_geometry.py
          │   │   ├── scara_joints.py
          │   │   ├── scara_pose.py
          │   │   ├── scara_step_coords.py
-         │   │   ├── simulation_state_dto.py
-         │   │   └── telemetry_dto.py
+         │   │   ├── simulation_state.py
+         │   │   └── telemetry.py
          │   └── service/
          │       ├── demo_generator.py
          │       ├── emulator_service.py
@@ -168,7 +168,7 @@ Tool structure
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
          │   │   │   ├── config_command_formatter.py
-         │   │   │   ├── firmware_response_dto.py
+         │   │   │   ├── firmware_response.py
          │   │   │   ├── __init__.py
          │   │   │   ├── motion_command_formatter.py
          │   │   │   └── protocol_parser.py

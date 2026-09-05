@@ -53,7 +53,6 @@ class IScaraScriptLoader(Protocol):
 
             :param filepath: Path to .scara or .json trajectory plan file.
             :return: List of ScaraPose waypoints.
-            :exceptions: OSError, ValueError.
         '''
 
     def parse_script(self, *, source: str) -> list[ScaraPose]:
@@ -62,5 +61,4 @@ class IScaraScriptLoader(Protocol):
 
             :param source: SCARA DSL source text.
             :return: List of ScaraPose waypoints.
-            :exceptions: ValueError.
         '''

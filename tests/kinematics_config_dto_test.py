@@ -16,13 +16,13 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Unit tests for KinematicsConfigDTO model.
+    Unit tests for KinematicsConfig model.
 '''
 
 from __future__ import annotations
 
 import unittest
-from scaraemu.core.model.kinematics_config_dto import KinematicsConfigDTO
+from scaraemu.core.model.kinematics_config import KinematicsConfig
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -35,11 +35,11 @@ __status__ = 'Updated'
 
 
 class TestKinematicsConfigDTO(unittest.TestCase):
-    '''Unit test cases for KinematicsConfigDTO model.'''
+    '''Unit test cases for KinematicsConfig model.'''
 
     def test_default_config(self) -> None:
         '''Tests transmission defaults.'''
-        cfg = KinematicsConfigDTO()
+        cfg = KinematicsConfig()
         self.assertEqual(cfg.steps_per_rev, 200.0)
         self.assertEqual(cfg.microstepping, 16.0)
         self.assertEqual(cfg.gear_ratio_j1, 4.0)

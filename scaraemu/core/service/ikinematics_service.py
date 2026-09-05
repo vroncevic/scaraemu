@@ -61,7 +61,6 @@ class IKinematicsService(Protocol):
             Returns active ScaraGeometry model.
 
             :return: ScaraGeometry instance.
-            :exceptions: None.
         '''
 
     def update_geometry(self, geometry: ScaraGeometry) -> None:
@@ -69,7 +68,6 @@ class IKinematicsService(Protocol):
             Updates geometry parameters.
 
             :param geometry: New ScaraGeometry instance.
-            :exceptions: None.
         '''
 
     def is_reachable(self, x: float, y: float) -> bool:
@@ -79,7 +77,6 @@ class IKinematicsService(Protocol):
             :param x: Target X coordinate in mm.
             :param y: Target Y coordinate in mm.
             :return: True if reachable, False otherwise.
-            :exceptions: None.
         '''
 
     def solve_ik(self, pose: ScaraPose, elbow_left: bool = False) -> ScaraJoints:
@@ -89,7 +86,6 @@ class IKinematicsService(Protocol):
             :param pose: Target Cartesian pose.
             :param elbow_left: True for Lefty mode, False for Righty mode.
             :return: ScaraJoints solution.
-            :exceptions: None.
         '''
 
     def solve_fk(self, joints: ScaraJoints) -> ScaraPose:
@@ -98,7 +94,6 @@ class IKinematicsService(Protocol):
 
             :param joints: ScaraJoints position.
             :return: Computed Cartesian ScaraPose.
-            :exceptions: None.
         '''
 
     def joints_to_steps(self, joints: ScaraJoints) -> ScaraStepCoords:
@@ -107,7 +102,6 @@ class IKinematicsService(Protocol):
 
             :param joints: ScaraJoints position.
             :return: ScaraStepCoords instance.
-            :exceptions: None.
         '''
 
     def steps_to_joints(self, steps: ScaraStepCoords) -> ScaraJoints:
@@ -116,7 +110,6 @@ class IKinematicsService(Protocol):
 
             :param steps: ScaraStepCoords instance.
             :return: ScaraJoints position.
-            :exceptions: None.
         '''
 
     def interpolate_linear(
@@ -132,5 +125,4 @@ class IKinematicsService(Protocol):
             :param end_pose: Ending Cartesian pose.
             :param segment_len_mm: Maximum segment resolution in mm.
             :return: List of interpolated intermediate ScaraPose instances.
-            :exceptions: None.
         '''

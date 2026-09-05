@@ -24,7 +24,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar
 
-from scaraemu.infrastructure.communication.protocol.firmware_response_dto import FirmwareResponseDTO
+from scaraemu.infrastructure.communication.protocol.firmware_response import FirmwareResponse
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -59,12 +59,12 @@ class ProtocolParser:
     ERR_PATTERN: ClassVar[re.Pattern] = re.compile(r'<ERR:(.*)>')
 
     @classmethod
-    def _parse_kv_telem(cls, clean_line: str) -> FirmwareResponseDTO:
+    def _parse_kv_telem(cls, clean_line: str) -> FirmwareResponse:
         '''
             Decodes key-value telemetry packet.
 
             :param clean_line: Cleaned input line string.
-            :return: Decoded FirmwareResponseDTO.
+            :return: Decoded FirmwareResponse.
             :exceptions: None.
         '''
         payload: dict[str, object] = {}
@@ -79,7 +79,7 @@ class ProtocolParser:
                 except ValueError:
                     payload[k_lower] = v.strip()
 
-        return FirmwareResponseDTO(
+        return FirmwareResponse(
             raw_line=clean_line,
             response_type='TELEM',
             is_success=True,
@@ -87,12 +87,12 @@ class ProtocolParser:
         )
 
     @classmethod
-    def _parse_resp(cls, clean_line: str) -> FirmwareResponseDTO:
+    def _parse_resp(cls, clean_line: str) -> FirmwareResponse:
         '''
             Decodes RESP response packet.
 
             :param clean_line: Cleaned input line string.
-            :return: Decoded FirmwareResponseDTO.
+            :return: Decoded FirmwareResponse.
             :exceptions: None.
         '''
         inner: str = clean_line.strip('<>')
@@ -168,7 +168,7 @@ class ProtocolParser:
             or resp_type in ('HOMING_FAILED', 'MOVE_FAILED')
         )
 
-        return FirmwareResponseDTO(
+        return FirmwareResponse(
             raw_line=clean_line,
             response_type=resp_type,
             is_success=not is_nack,
@@ -176,12 +176,12 @@ class ProtocolParser:
         )
 
     @classmethod
-    def parse_line(cls, line: str) -> FirmwareResponseDTO:
+    def parse_line(cls, line: str) -> FirmwareResponse:
         '''
-            Decodes a single raw serial text line into a structured FirmwareResponseDTO.
+            Decodes a single raw serial text line into a structured FirmwareResponse.
 
             :param line: Raw serial input string.
-            :return: FirmwareResponseDTO representation.
+            :return: FirmwareResponse representation.
             :exceptions: None.
         '''
         clean_line: str = line.strip()
@@ -195,7 +195,7 @@ class ProtocolParser:
         telem_match = cls.TELEM_PATTERN.search(clean_line)
         if telem_match:
             try:
-                return FirmwareResponseDTO(
+                return FirmwareResponse(
                     raw_line=clean_line,
                     response_type='TELEM',
                     is_success=True,
@@ -212,7 +212,7 @@ class ProtocolParser:
 
         err_match = cls.ERR_PATTERN.search(clean_line)
         if err_match:
-            return FirmwareResponseDTO(
+            return FirmwareResponse(
                 raw_line=clean_line,
                 response_type='ERROR',
                 is_success=False,
@@ -221,14 +221,14 @@ class ProtocolParser:
 
         ack_match = cls.ACK_PATTERN.search(clean_line)
         if ack_match:
-            return FirmwareResponseDTO(
+            return FirmwareResponse(
                 raw_line=clean_line,
                 response_type='ACK',
                 is_success=True,
                 payload={'message': ack_match.group(1)}
             )
 
-        return FirmwareResponseDTO(
+        return FirmwareResponse(
             raw_line=clean_line,
             response_type='LOG',
             is_success=True,

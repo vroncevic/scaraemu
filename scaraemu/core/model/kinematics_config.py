@@ -2,7 +2,7 @@
 
 '''
 Module
-    kinematics_config_dto.py
+    kinematics_config.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,7 +16,7 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Defines SCARA transmission and stepper motor hardware configuration DTO.
+    Defines SCARA transmission and stepper motor hardware configuration.
 '''
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ __status__ = 'Updated'
 
 
 @dataclass(frozen=True, slots=True)
-class KinematicsConfigDTO:
+class KinematicsConfig:
     '''
         Mechanical gearing, leadscrew, and stepper motor resolution specs.
 

@@ -63,15 +63,11 @@ class ICanvasXY(Protocol):
             :param joints: Current articulated joint angles.
             :param trail_points: Sequence of historical trail points.
             :param current_target: Optional active target pose.
-            :exceptions: None.
         '''
-        ...
 
     def set_on_target_click(self, callback: Callable[[float, float], None]) -> None:
         '''
             Registers click/drag callback for commanding XY coordinates.
 
             :param callback: Callback accepting (x, y) coordinates in mm.
-            :exceptions: None.
         '''
-        ...

@@ -26,8 +26,8 @@ from collections.abc import Sequence
 
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.model.scara_joints import ScaraJoints
-from scaraemu.core.model.telemetry_dto import TelemetryDTO
-from scaraemu.core.model.simulation_state_dto import SimulationStateDTO
+from scaraemu.core.model.telemetry import Telemetry
+from scaraemu.core.model.simulation_state import SimulationState
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -53,8 +53,8 @@ class IEmulatorService(Protocol):
                 | enqueue_trajectory - Appends sequence of waypoints to motion queue.
                 | step_simulation - Advances motion queue by one simulation step.
                 | clear_queue - Clears pending motion queue and path trail.
-                | get_telemetry - Returns current TelemetryDTO snapshot.
-                | get_simulation_state - Returns SimulationStateDTO.
+                | get_telemetry - Returns current Telemetry snapshot.
+                | get_simulation_state - Returns SimulationState.
                 | set_elbow_mode - Toggles elbow orientation mode.
                 | set_motors_enabled - Enables or disables stepper motor drivers.
                 | set_estop - Sets emergency stop state.
@@ -68,7 +68,6 @@ class IEmulatorService(Protocol):
             Updates current robot pose from hardware telemetry.
 
             :param pose: ScaraPose from hardware.
-            :exceptions: None.
         '''
 
     def get_current_pose(self) -> ScaraPose:
@@ -76,7 +75,6 @@ class IEmulatorService(Protocol):
             Returns current Cartesian pose.
 
             :return: ScaraPose instance.
-            :exceptions: None.
         '''
 
     def get_current_joints(self) -> ScaraJoints:
@@ -84,7 +82,6 @@ class IEmulatorService(Protocol):
             Returns current joint positions.
 
             :return: ScaraJoints instance.
-            :exceptions: None.
         '''
 
     def set_target_pose(self, pose: ScaraPose, direct: bool = False) -> bool:
@@ -94,7 +91,6 @@ class IEmulatorService(Protocol):
             :param pose: Target ScaraPose.
             :param direct: If True, moves immediately without interpolation queue.
             :return: True if target is valid and reachable, False otherwise.
-            :exceptions: None.
         '''
 
     def enqueue_trajectory(self, poses: Sequence[ScaraPose]) -> int:
@@ -103,7 +99,6 @@ class IEmulatorService(Protocol):
 
             :param poses: Sequence of target ScaraPose waypoints.
             :return: Count of successfully enqueued waypoints.
-            :exceptions: None.
         '''
 
     def step_simulation(self) -> bool:
@@ -111,30 +106,25 @@ class IEmulatorService(Protocol):
             Advances motion queue by one simulation step.
 
             :return: True if robot position changed, False if idle.
-            :exceptions: None.
         '''
 
     def clear_queue(self) -> None:
         '''
             Clears pending motion queue and path trail.
-
-            :exceptions: None.
         '''
 
-    def get_telemetry(self) -> TelemetryDTO:
+    def get_telemetry(self) -> Telemetry:
         '''
-            Returns current TelemetryDTO snapshot.
+            Returns current Telemetry snapshot.
 
-            :return: TelemetryDTO instance.
-            :exceptions: None.
+            :return: Telemetry instance.
         '''
 
-    def get_simulation_state(self) -> SimulationStateDTO:
+    def get_simulation_state(self) -> SimulationState:
         '''
-            Returns SimulationStateDTO.
+            Returns SimulationState.
 
-            :return: SimulationStateDTO instance.
-            :exceptions: None.
+            :return: SimulationState instance.
         '''
 
     def set_elbow_mode(self, elbow_left: bool) -> None:
@@ -142,7 +132,6 @@ class IEmulatorService(Protocol):
             Toggles elbow orientation mode.
 
             :param elbow_left: True for Lefty mode, False for Righty mode.
-            :exceptions: None.
         '''
 
     def set_motors_enabled(self, enabled: bool) -> None:
@@ -150,7 +139,6 @@ class IEmulatorService(Protocol):
             Enables or disables stepper motor drivers.
 
             :param enabled: True to enable, False to disable.
-            :exceptions: None.
         '''
 
     def set_estop(self, active: bool) -> None:
@@ -158,7 +146,6 @@ class IEmulatorService(Protocol):
             Sets emergency stop state.
 
             :param active: True to engage E-STOP, False to clear.
-            :exceptions: None.
         '''
 
     def set_hold(self, active: bool) -> None:
@@ -166,7 +153,6 @@ class IEmulatorService(Protocol):
             Sets feed-hold pause state.
 
             :param active: True to pause motion queue, False to resume.
-            :exceptions: None.
         '''
 
     def set_hardware_connected(self, connected: bool) -> None:
@@ -174,5 +160,4 @@ class IEmulatorService(Protocol):
             Sets hardware bridge connection state.
 
             :param connected: True if connected, False otherwise.
-            :exceptions: None.
         '''

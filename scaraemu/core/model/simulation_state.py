@@ -2,7 +2,7 @@
 
 '''
 Module
-    telemetry_dto.py
+    simulation_state.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,7 +16,7 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Defines SCARA live telemetry state Data Transfer Object.
+    Defines SCARA animation and simulation engine state Data Transfer Object.
 '''
 
 from __future__ import annotations
@@ -24,8 +24,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.core.model.scara_joints import ScaraJoints
-from scaraemu.core.model.scara_step_coords import ScaraStepCoords
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -38,26 +36,20 @@ __status__ = 'Updated'
 
 
 @dataclass(frozen=True, slots=True)
-class TelemetryDTO:
+class SimulationState:
     '''
-        Snapshot of full kinematic, Cartesian, and step telemetry data.
+        State of emulator simulation queue and motion rendering.
 
         It defines:
 
             :attributes:
-                | pose - Cartesian ScaraPose.
-                | joints - Joint angle ScaraJoints.
-                | steps - Stepper pulse ScaraStepCoords.
-                | is_hardware_connected - Hardware bridge active status flag.
-                | motors_enabled - Stepper driver power enable status.
-                | estop_active - Emergency stop active status flag.
-                | hold_active - Feed-hold pause active status flag.
+                | is_animating - True if background interpolation loop is active.
+                | queue_depth - Number of pending target poses in motion queue.
+                | trail_points - Trajectory trail historical path coordinates.
+                | current_target - Active target pose or None if idle.
     '''
 
-    pose: ScaraPose
-    joints: ScaraJoints
-    steps: ScaraStepCoords
-    is_hardware_connected: bool = False
-    motors_enabled: bool = True
-    estop_active: bool = False
-    hold_active: bool = False
+    is_animating: bool
+    queue_depth: int
+    trail_points: tuple[tuple[float, float], ...]
+    current_target: ScaraPose | None = None

@@ -1,7 +1,7 @@
 scaraemu.core.model.kinematics\_config\_dto module
 ==================================================
 
-.. automodule:: scaraemu.core.model.kinematics_config_dto
+.. automodule:: scaraemu.core.model.kinematics_config
    :members:
    :undoc-members:
    :show-inheritance:

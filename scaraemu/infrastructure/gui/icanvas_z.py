@@ -53,15 +53,11 @@ class ICanvasZ(Protocol):
 
             :param pose: Current Cartesian pose.
             :param current_target: Optional active target pose.
-            :exceptions: None.
         '''
-        ...
 
     def set_on_target_click(self, callback: Callable[[float], None]) -> None:
         '''
             Registers click/drag callback for commanding Z coordinate.
 
             :param callback: Callback accepting target Z height in mm.
-            :exceptions: None.
         '''
-        ...

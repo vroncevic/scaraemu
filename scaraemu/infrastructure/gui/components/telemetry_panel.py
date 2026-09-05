@@ -24,7 +24,7 @@ from __future__ import annotations
 from math import degrees
 from tkinter import BOTH, Frame, Label, LabelFrame, Widget
 
-from scaraemu.core.model.telemetry_dto import TelemetryDTO
+from scaraemu.core.model.telemetry import Telemetry
 from scaraemu.infrastructure.gui.theme import ThemeManager
 
 __author__ = 'Vladimir Roncevic'
@@ -57,7 +57,7 @@ class TelemetryPanel(LabelFrame):
                 | _val_s4 - Step count J4 readout label.
             :methods:
                 | __init__ - Initializes telemetry layout and widgets.
-                | update_telemetry - Updates display values from TelemetryDTO.
+                | update_telemetry - Updates display values from Telemetry.
     '''
 
     _val_x: Label
@@ -145,11 +145,11 @@ class TelemetryPanel(LabelFrame):
         val_lbl.grid(row=row, column=1, sticky='e', padx=(15, 0), pady=2)
         return val_lbl
 
-    def update_telemetry(self, telem: TelemetryDTO) -> None:
+    def update_telemetry(self, telem: Telemetry) -> None:
         '''
-            Updates display values from TelemetryDTO.
+            Updates display values from Telemetry.
 
-            :param telem: Current TelemetryDTO snapshot.
+            :param telem: Current Telemetry snapshot.
             :exceptions: None.
         '''
         if not self.winfo_ismapped():

@@ -16,7 +16,7 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Unit tests for TelemetryDTO model.
+    Unit tests for Telemetry model.
 '''
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ import unittest
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.model.scara_joints import ScaraJoints
 from scaraemu.core.model.scara_step_coords import ScaraStepCoords
-from scaraemu.core.model.telemetry_dto import TelemetryDTO
+from scaraemu.core.model.telemetry import Telemetry
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -38,7 +38,7 @@ __status__ = 'Updated'
 
 
 class TestTelemetryDTO(unittest.TestCase):
-    '''Unit test cases for TelemetryDTO model.'''
+    '''Unit test cases for Telemetry model.'''
 
     def test_telemetry_dto_instantiation(self) -> None:
         '''Tests full telemetry snapshot properties.'''
@@ -46,7 +46,7 @@ class TestTelemetryDTO(unittest.TestCase):
         joints = ScaraJoints(theta1=0.0, theta2=0.0, z=10.0, theta4=0.0)
         steps = ScaraStepCoords(j1_steps=0, j2_steps=0, z_steps=400, j4_steps=0)
 
-        dto = TelemetryDTO(
+        dto = Telemetry(
             pose=pose,
             joints=joints,
             steps=steps,

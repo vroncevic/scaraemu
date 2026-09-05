@@ -2,7 +2,7 @@
 
 '''
 Module
-    simulation_state_dto.py
+    firmware_response.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,14 +16,13 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Defines SCARA animation and simulation engine state Data Transfer Object.
+    Data Transfer Object for parsed firmware response packets.
 '''
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-
-from scaraemu.core.model.scara_pose import ScaraPose
+from typing import Any
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -36,20 +35,20 @@ __status__ = 'Updated'
 
 
 @dataclass(frozen=True, slots=True)
-class SimulationStateDTO:
+class FirmwareResponse:
     '''
-        State of emulator simulation queue and motion rendering.
+        Structured representation of incoming firmware serial lines.
 
         It defines:
 
             :attributes:
-                | is_animating - True if background interpolation loop is active.
-                | queue_depth - Number of pending target poses in motion queue.
-                | trail_points - Trajectory trail historical path coordinates.
-                | current_target - Active target pose or None if idle.
+                | raw_line - Original unmodified text line.
+                | response_type - Type classification ('ACK', 'ERROR', 'STATUS', 'TELEM', 'LOG').
+                | is_success - True if command was successfully processed.
+                | payload - Extracted parsed fields or telemetry dictionary.
     '''
 
-    is_animating: bool
-    queue_depth: int
-    trail_points: tuple[tuple[float, float], ...]
-    current_target: ScaraPose | None = None
+    raw_line: str
+    response_type: str
+    is_success: bool = True
+    payload: dict[str, Any] | None = None

@@ -27,8 +27,8 @@ from typing import Final
 
 from scaraemu.core.model.scara_pose import ScaraPose
 from scaraemu.core.model.scara_joints import ScaraJoints
-from scaraemu.core.model.telemetry_dto import TelemetryDTO
-from scaraemu.core.model.simulation_state_dto import SimulationStateDTO
+from scaraemu.core.model.telemetry import Telemetry
+from scaraemu.core.model.simulation_state import SimulationState
 from scaraemu.core.service.ikinematics_service import IKinematicsService
 
 __author__ = 'Vladimir Roncevic'
@@ -68,8 +68,8 @@ class EmulatorService:
                 | enqueue_trajectory - Appends sequence of waypoints to motion queue.
                 | step_simulation - Advances motion queue by one simulation step.
                 | clear_queue - Clears pending motion queue and path trail.
-                | get_telemetry - Returns current TelemetryDTO snapshot.
-                | get_simulation_state - Returns SimulationStateDTO.
+                | get_telemetry - Returns current Telemetry snapshot.
+                | get_simulation_state - Returns SimulationState.
                 | set_elbow_mode - Toggles elbow orientation mode.
                 | set_motors_enabled - Enables or disables stepper motor drivers.
                 | set_estop - Sets emergency stop state.
@@ -248,15 +248,15 @@ class EmulatorService:
         self._trail_points.clear()
         self._trail_points.append((self._current_pose.x, self._current_pose.y))
 
-    def get_telemetry(self) -> TelemetryDTO:
+    def get_telemetry(self) -> Telemetry:
         '''
-            Returns current TelemetryDTO snapshot.
+            Returns current Telemetry snapshot.
 
-            :return: TelemetryDTO instance.
+            :return: Telemetry instance.
             :exceptions: None.
         '''
         steps = self._kinematics.joints_to_steps(self._current_joints)
-        return TelemetryDTO(
+        return Telemetry(
             pose=self._current_pose,
             joints=self._current_joints,
             steps=steps,
@@ -266,17 +266,17 @@ class EmulatorService:
             hold_active=self._hold_active
         )
 
-    def get_simulation_state(self) -> SimulationStateDTO:
+    def get_simulation_state(self) -> SimulationState:
         '''
-            Returns SimulationStateDTO.
+            Returns SimulationState.
 
-            :return: SimulationStateDTO instance.
+            :return: SimulationState instance.
             :exceptions: None.
         '''
         target = self._active_target if self._is_hardware_connected else (
             self._motion_queue[0] if self._motion_queue else None
         )
-        return SimulationStateDTO(
+        return SimulationState(
             is_animating=len(self._motion_queue) > 0 and not self._is_hardware_connected,
             queue_depth=len(self._motion_queue),
             trail_points=tuple(self._trail_points),
