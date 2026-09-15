@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-import unittest
+from unittest import TestCase, main
 from scaraemu.core.model.kinematics.scara_geometry import ScaraGeometry
 from scaraemu.core.model.kinematics.scara_pose import ScaraPose
 from scaraemu.core.service.kinematics.kinematics_service import KinematicsService
@@ -38,7 +38,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class TestEmulatorService(unittest.TestCase):
+class TestEmulatorService(TestCase):
     '''Unit test cases for EmulatorService.'''
 
     def setUp(self) -> None:
@@ -131,9 +131,30 @@ class TestEmulatorService(unittest.TestCase):
         self.assertEqual(self.emu.get_current_pose().x, 200.0)
         self.assertEqual(self.emu.get_current_pose().y, 50.0)
         self.assertEqual(self.emu.get_current_pose().z, 30.0)
+    def test_auto_elbow_switching(self) -> None:
+        '''Tests automatic elbow mode switching when target requires opposite elbow.'''
+        self.assertFalse(self.emu.get_telemetry().elbow_left)
+        target = ScaraPose(x=-145.91, y=-100.12, z=20.0, phi=0.0)
+
+        ok = self.emu.set_target_pose(target, direct=True)
+        self.assertTrue(ok)
+        self.assertTrue(self.emu.get_telemetry().elbow_left)
         self.assertTrue(self.emu.get_current_joints().reachable)
 
+        # Switch back to Righty and test through motion queue
+        self.emu.set_elbow_mode(False)
+        self.assertFalse(self.emu.get_telemetry().elbow_left)
+        self.emu.clear_queue()
+        count = self.emu.enqueue_trajectory([target])
+        self.assertGreater(count, 0)
+
+        while self.emu.get_simulation_state().queue_depth > 0:
+            self.emu.step_simulation()
+
+        self.assertTrue(self.emu.get_telemetry().elbow_left)
+        self.assertAlmostEqual(self.emu.get_current_pose().x, -145.91, delta=2.0)
+        self.assertAlmostEqual(self.emu.get_current_pose().y, -100.12, delta=2.0)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

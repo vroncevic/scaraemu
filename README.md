@@ -384,23 +384,23 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/core/model/kinematics/scara_step_coords.py` | 16 | 0 | 100%|
 | `scaraemu/core/model/simulation/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/model/simulation/simulation_state.py` | 17 | 0 | 100%|
-| `scaraemu/core/model/simulation/telemetry.py` | 22 | 0 | 100%|
+| `scaraemu/core/model/simulation/telemetry.py` | 23 | 0 | 100%|
 | `scaraemu/core/service/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/engine.py` | 23 | 0 | 100%|
 | `scaraemu/core/service/iservice.py` | 17 | 0 | 100%|
 | `scaraemu/core/service/kinematics/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/kinematics/ikinematics_service.py` | 24 | 0 | 100%|
-| `scaraemu/core/service/kinematics/kinematics_service.py` | 103 | 30 | 71%|
+| `scaraemu/core/service/kinematics/kinematics_service.py` | 103 | 27 | 74%|
 | `scaraemu/core/service/kinematics/kinematics_step_converter.py` | 39 | 2 | 95%|
-| `scaraemu/core/service/kinematics/linear_path_interpolator.py` | 27 | 1 | 96%|
+| `scaraemu/core/service/kinematics/linear_path_interpolator.py` | 27 | 0 | 100%|
 | `scaraemu/core/service/script/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/script/iscara_script_loader.py` | 15 | 15 | 0%|
 | `scaraemu/core/service/script/scara_script_loader.py` | 114 | 5 | 96%|
 | `scaraemu/core/service/simulation/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/service/simulation/demo_generator.py` | 58 | 0 | 100%|
-| `scaraemu/core/service/simulation/emulator_service.py` | 118 | 13 | 89%|
+| `scaraemu/core/service/simulation/emulator_service.py` | 133 | 13 | 90%|
 | `scaraemu/core/service/simulation/iemulator_service.py` | 31 | 0 | 100%|
-| `scaraemu/core/service/simulation/motion_trajectory_queue.py` | 43 | 4 | 91%|
+| `scaraemu/core/service/simulation/motion_trajectory_queue.py` | 43 | 1 | 98%|
 | `scaraemu/engine.py` | 64 | 64 | 0%|
 | `scaraemu/infrastructure/cli/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/cli/engine.py` | 39 | 7 | 82%|
@@ -434,7 +434,7 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/infrastructure/communication/serial_device_preferences.py` | 19 | 2 | 89%|
 | `scaraemu/infrastructure/communication/serial_port_scanner.py` | 43 | 5 | 88%|
 | `scaraemu/infrastructure/communication/server/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/communication/server/virtual_command_processor.py` | 114 | 27 | 76%|
+| `scaraemu/infrastructure/communication/server/virtual_command_processor.py` | 123 | 27 | 78%|
 | `scaraemu/infrastructure/communication/server/virtual_robot_server.py` | 106 | 19 | 82%|
 | `scaraemu/infrastructure/communication/transport/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/communication/transport/itransport.py` | 22 | 5 | 77%|
@@ -483,7 +483,7 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/setup/options.py` | 22 | 0 | 100%|
 | `scaraemu/setup/registry.py` | 34 | 1 | 97%|
 | `scaraemu/setup/validator.py` | 53 | 5 | 91%|
-| **Total** | 4010 | 1102 | 73% |
+| **Total** | 4035 | 1095 | 73% |
 
 </details>
 

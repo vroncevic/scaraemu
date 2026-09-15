@@ -171,6 +171,15 @@ class VirtualCommandProcessor:
             case 'STATUS':
                 curr = self._emulator.get_current_pose()
                 return [f'<RESP:STATUS#STATE=IDLE#X={curr.x:.2f}#Y={curr.y:.2f}#Z={curr.z:.2f}#PHI={curr.phi:.2f}>']
+            case 'SET_ELBOW':
+                raw_mode: str = parts[1].upper() if len(parts) > 1 else 'RIGHT'
+                is_left: bool = (raw_mode == 'LEFT')
+                self._emulator.set_elbow_mode(is_left)
+                mode_str: str = 'LEFT' if is_left else 'RIGHT'
+                return [f'<RESP:ACK#ELBOW={mode_str}>']
+            case 'GET_ELBOW':
+                mode_str = 'LEFT' if self._emulator.get_telemetry().elbow_left else 'RIGHT'
+                return [f'<RESP:ELBOW#{mode_str}>']
             case 'JOG':
                 return self._handle_jog(parts)
             case _:

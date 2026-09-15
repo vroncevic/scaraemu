@@ -135,6 +135,25 @@ class TestVirtualRobotServer(TestCase):
         resp8 = client.recv(1024).decode('utf-8')
         self.assertIn('<RESP:POS#', resp8)
 
+        # 7. Elbow configuration commands
+        client.sendall(b'<CMD:SET_ELBOW#LEFT>\n')
+        resp9 = client.recv(1024).decode('utf-8')
+        self.assertIn('<RESP:ACK#ELBOW=LEFT>', resp9)
+        self.assertTrue(self.emu.get_telemetry().elbow_left)
+
+        client.sendall(b'<CMD:GET_ELBOW>\n')
+        resp10 = client.recv(1024).decode('utf-8')
+        self.assertIn('<RESP:ELBOW#LEFT>', resp10)
+
+        client.sendall(b'<CMD:SET_ELBOW#RIGHT>\n')
+        resp11 = client.recv(1024).decode('utf-8')
+        self.assertIn('<RESP:ACK#ELBOW=RIGHT>', resp11)
+        self.assertFalse(self.emu.get_telemetry().elbow_left)
+
+        client.sendall(b'<CMD:GET_ELBOW>\n')
+        resp12 = client.recv(1024).decode('utf-8')
+        self.assertIn('<RESP:ELBOW#RIGHT>', resp12)
+
         client.close()
 
 

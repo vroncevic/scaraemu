@@ -52,6 +52,7 @@ class Telemetry:
                 | motors_enabled - Stepper driver power enable status.
                 | estop_active - Emergency stop active status flag.
                 | hold_active - Feed-hold pause active status flag.
+                | elbow_left - Active elbow orientation configuration flag.
     '''
 
     pose: ScaraPose
@@ -61,3 +62,4 @@ class Telemetry:
     motors_enabled: bool = True
     estop_active: bool = False
     hold_active: bool = False
+    elbow_left: bool = False

@@ -149,7 +149,14 @@ class EmulatorService:
 
         joints: ScaraJoints = self._kinematics.solve_ik(pose, self._elbow_left)
         if not joints.reachable:
-            return False
+            alt_joints: ScaraJoints = self._kinematics.solve_ik(
+                pose, not self._elbow_left
+            )
+            if alt_joints.reachable:
+                self._elbow_left = not self._elbow_left
+                joints = alt_joints
+            else:
+                return False
 
         self._active_target = pose
 
@@ -224,6 +231,14 @@ class EmulatorService:
         next_pose: ScaraPose = self._queue.pop_next()
         joints: ScaraJoints = self._kinematics.solve_ik(next_pose, self._elbow_left)
 
+        if not joints.reachable:
+            alt_joints: ScaraJoints = self._kinematics.solve_ik(
+                next_pose, not self._elbow_left
+            )
+            if alt_joints.reachable:
+                self._elbow_left = not self._elbow_left
+                joints = alt_joints
+
         if joints.reachable:
             self._current_pose = next_pose
             self._current_joints = joints
@@ -256,7 +271,8 @@ class EmulatorService:
             is_hardware_connected=self._is_hardware_connected,
             motors_enabled=self._motors_enabled,
             estop_active=self._estop_active,
-            hold_active=self._hold_active
+            hold_active=self._hold_active,
+            elbow_left=self._elbow_left
         )
 
     def get_simulation_state(self) -> SimulationState:
@@ -334,5 +350,13 @@ class EmulatorService:
             :exceptions: None.
         '''
         self._current_pose = pose
-        self._current_joints = self._kinematics.solve_ik(pose, self._elbow_left)
+        joints: ScaraJoints = self._kinematics.solve_ik(pose, self._elbow_left)
+        if not joints.reachable:
+            alt_joints: ScaraJoints = self._kinematics.solve_ik(
+                pose, not self._elbow_left
+            )
+            if alt_joints.reachable:
+                self._elbow_left = not self._elbow_left
+                joints = alt_joints
+        self._current_joints = joints
         self._queue.append_trail(pose.x, pose.y)

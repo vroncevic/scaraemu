@@ -115,7 +115,7 @@ class GuiEventHandler:
         new_pose = ScaraPose(x=x, y=y, z=curr.z, phi=curr.phi)
         ok, reason = self._diagnose_pose(new_pose)
         if not ok:
-            curr_left = emu.get_telemetry().joints.theta2 < 0
+            curr_left = emu.get_telemetry().elbow_left
             other_left = not curr_left
             kin = self._service.get_kinematics()
             ok_other, _ = kin.diagnose_reachability(new_pose, other_left)
@@ -206,7 +206,7 @@ class GuiEventHandler:
             :exceptions: None.
         '''
         emu = self._service.get_emulator()
-        curr_left = emu.get_telemetry().joints.theta2 < 0
+        curr_left = emu.get_telemetry().elbow_left
         new_left = not curr_left
         emu.set_elbow_mode(new_left)
         cmd = CommandFormatter.format_set_elbow(new_left)
