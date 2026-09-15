@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-import re
+from re import compile as re_compile, Pattern
 from typing import ClassVar
 
 from scaraemu.infrastructure.communication.protocol.firmware_response import FirmwareResponse
@@ -52,11 +52,11 @@ class ProtocolParser:
                 | _parse_resp - Decodes RESP response packet.
     '''
 
-    TELEM_PATTERN: ClassVar[re.Pattern] = re.compile(
+    TELEM_PATTERN: ClassVar[Pattern[str]] = re_compile(
         r'<TELEM:([-\d.]+)#([-\d.]+)#([-\d.]+)#([-\d.]+)#([A-Za-z0-9_]+)>'
     )
-    ACK_PATTERN: ClassVar[re.Pattern] = re.compile(r'<ACK:(.*)>')
-    ERR_PATTERN: ClassVar[re.Pattern] = re.compile(r'<ERR:(.*)>')
+    ACK_PATTERN: ClassVar[Pattern[str]] = re_compile(r'<ACK:(.*)>')
+    ERR_PATTERN: ClassVar[Pattern[str]] = re_compile(r'<ERR:(.*)>')
 
     @classmethod
     def _parse_kv_telem(cls, clean_line: str) -> FirmwareResponse:

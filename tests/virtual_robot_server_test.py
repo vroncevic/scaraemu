@@ -24,11 +24,11 @@ from __future__ import annotations
 from socket import AF_INET, SOCK_STREAM, socket as Socket
 from unittest import TestCase, main as unittest_main
 
-from scaraemu.core.model.scara_geometry import ScaraGeometry
-from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.core.service.emulator_service import EmulatorService
-from scaraemu.core.service.kinematics_service import KinematicsService
-from scaraemu.infrastructure.communication.transport.virtual_robot_server import VirtualRobotServer
+from scaraemu.core.model.kinematics.scara_geometry import ScaraGeometry
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
+from scaraemu.core.service.simulation.emulator_service import EmulatorService
+from scaraemu.core.service.kinematics.kinematics_service import KinematicsService
+from scaraemu.infrastructure.communication.server.virtual_robot_server import VirtualRobotServer
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

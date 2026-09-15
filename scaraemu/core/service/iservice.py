@@ -23,8 +23,8 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
+from scaraemu.core.service.kinematics.ikinematics_service import IKinematicsService
+from scaraemu.core.service.simulation.iemulator_service import IEmulatorService
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

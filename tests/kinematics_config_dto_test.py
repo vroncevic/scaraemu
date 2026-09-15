@@ -22,7 +22,7 @@ Info
 from __future__ import annotations
 
 import unittest
-from scaraemu.core.model.kinematics_config import KinematicsConfig
+from scaraemu.core.model.kinematics.kinematics_config import KinematicsConfig
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

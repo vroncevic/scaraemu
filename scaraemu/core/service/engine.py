@@ -21,9 +21,8 @@ Info
 
 from __future__ import annotations
 
-from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
-from scaraemu.core.service.iservice import IService
+from scaraemu.core.service.kinematics.ikinematics_service import IKinematicsService
+from scaraemu.core.service.simulation.iemulator_service import IEmulatorService
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -35,7 +34,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class Service(IService):
+class Service:
     '''
         Service facade orchestrating kinematics and emulation services.
 

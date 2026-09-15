@@ -22,7 +22,7 @@ Info
 from __future__ import annotations
 
 import unittest
-from scaraemu.core.service.demo_generator import TrajectoryDemoGenerator
+from scaraemu.core.service.simulation.demo_generator import TrajectoryDemoGenerator
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

@@ -21,10 +21,11 @@ Info
 
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
 from typing import ClassVar
+
+from scaraemu.infrastructure.communication.preferences.connection_preferences_repository import (
+    ConnectionPreferencesRepository,
+)
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -43,15 +44,13 @@ class SerialDevicePreferences:
         It defines:
 
             :attributes:
-                | CONFIG_DIR - Directory path for configuration storage.
-                | CONFIG_FILE - File path to the serial device configuration JSON.
+                | _repository - Default connection preferences repository.
             :methods:
                 | load_preference - Reads previously saved port and baud rate.
                 | save_preference - Persists active port and baud rate to storage.
     '''
 
-    CONFIG_DIR: ClassVar[Path] = Path(os.path.expanduser('~/.config/scara'))
-    CONFIG_FILE: ClassVar[Path] = Path(os.path.expanduser('~/.config/scara/serial_device.json'))
+    _repository: ClassVar[ConnectionPreferencesRepository] = ConnectionPreferencesRepository()
 
     @classmethod
     def load_preference(cls) -> tuple[str | None, int | None]:
@@ -61,18 +60,7 @@ class SerialDevicePreferences:
             :return: Tuple of (port, baud) or (None, None) if not found.
             :exceptions: None.
         '''
-        try:
-            if cls.CONFIG_FILE.is_file():
-                with open(cls.CONFIG_FILE, 'r', encoding='utf-8') as stream:
-                    payload: dict[str, object] = json.load(stream)
-                    raw_port = payload.get('port')
-                    raw_baud = payload.get('baud')
-                    port: str | None = str(raw_port) if raw_port is not None else None
-                    baud: int | None = int(raw_baud) if raw_baud is not None else None
-                    return port, baud
-        except (OSError, ValueError, TypeError, json.JSONDecodeError):
-            pass
-        return None, None
+        return cls._repository.load_preference()
 
     @classmethod
     def save_preference(cls, port: str, baud: int = 115200) -> bool:
@@ -84,12 +72,4 @@ class SerialDevicePreferences:
             :return: True if persisted successfully, False otherwise.
             :exceptions: None.
         '''
-        if not port or port == 'Virtual / None':
-            return False
-        try:
-            cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-            with open(cls.CONFIG_FILE, 'w', encoding='utf-8') as stream:
-                json.dump({'port': port, 'baud': baud}, stream, indent=2)
-            return True
-        except (OSError, TypeError):
-            return False
+        return cls._repository.save_preference(port, baud)

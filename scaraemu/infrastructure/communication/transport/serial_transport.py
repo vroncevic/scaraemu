@@ -27,8 +27,6 @@ from typing import Callable, Final
 
 from serial import Serial, SerialException
 
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
@@ -39,7 +37,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class SerialTransport(ITransport):
+class SerialTransport:
     '''
         Hardware serial communication transport communicating with microcontroller over UART/USB.
 

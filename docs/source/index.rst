@@ -120,24 +120,37 @@ Tool structure
          │   ├── __init__.py
          │   ├── model/
          │   │   ├── __init__.py
-         │   │   ├── kinematics_config.py
-         │   │   ├── scara_geometry.py
-         │   │   ├── scara_joints.py
-         │   │   ├── scara_pose.py
-         │   │   ├── scara_step_coords.py
-         │   │   ├── simulation_state.py
-         │   │   └── telemetry.py
+         │   │   ├── kinematics/
+         │   │   │   ├── __init__.py
+         │   │   │   ├── kinematics_config.py
+         │   │   │   ├── scara_geometry.py
+         │   │   │   ├── scara_joints.py
+         │   │   │   ├── scara_pose.py
+         │   │   │   └── scara_step_coords.py
+         │   │   └── simulation/
+         │   │       ├── __init__.py
+         │   │       ├── simulation_state.py
+         │   │       └── telemetry.py
          │   └── service/
-         │       ├── demo_generator.py
-         │       ├── emulator_service.py
          │       ├── engine.py
-         │       ├── iemulator_service.py
-         │       ├── ikinematics_service.py
          │       ├── __init__.py
-         │       ├── iscara_script_loader.py
          │       ├── iservice.py
-         │       ├── kinematics_service.py
-         │       └── scara_script_loader.py
+         │       ├── kinematics/
+         │       │   ├── ikinematics_service.py
+         │       │   ├── __init__.py
+         │       │   ├── kinematics_service.py
+         │       │   ├── kinematics_step_converter.py
+         │       │   └── linear_path_interpolator.py
+         │       ├── script/
+         │       │   ├── __init__.py
+         │       │   ├── iscara_script_loader.py
+         │       │   └── scara_script_loader.py
+         │       └── simulation/
+         │           ├── demo_generator.py
+         │           ├── emulator_service.py
+         │           ├── iemulator_service.py
+         │           ├── __init__.py
+         │           └── motion_trajectory_queue.py
          ├── engine.py
          ├── infrastructure/
          │   ├── cli/
@@ -164,6 +177,10 @@ Tool structure
          │   │   └── __init__.py
          │   ├── communication/
          │   │   ├── __init__.py
+         │   │   ├── preferences/
+         │   │   │   ├── connection_preferences_repository.py
+         │   │   │   ├── iconnection_preferences_repository.py
+         │   │   │   └── __init__.py
          │   │   ├── protocol/
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
@@ -174,36 +191,68 @@ Tool structure
          │   │   │   └── protocol_parser.py
          │   │   ├── serial_device_preferences.py
          │   │   ├── serial_port_scanner.py
+         │   │   ├── server/
+         │   │   │   ├── __init__.py
+         │   │   │   ├── ivirtual_robot_server.py
+         │   │   │   ├── virtual_command_processor.py
+         │   │   │   └── virtual_robot_server.py
          │   │   └── transport/
          │   │       ├── __init__.py
          │   │       ├── itransport.py
-         │   │       ├── ivirtual_robot_server.py
          │   │       ├── serial_transport.py
-         │   │       ├── tcp_transport.py
-         │   │       └── virtual_robot_server.py
+         │   │       └── tcp_transport.py
          │   ├── config/
          │   │   ├── scara_geometry.json
          │   │   ├── scaraemu.cfg
          │   │   ├── scaraemu.logo
          │   │   └── scheme.json
          │   └── gui/
-         │       ├── canvas_xy.py
-         │       ├── canvas_z.py
-         │       ├── components/
+         │       ├── bridge/
+         │       │   ├── hardware_bridge_controller.py
+         │       │   └── __init__.py
+         │       ├── canvas/
+         │       │   ├── canvas_viewport.py
+         │       │   ├── canvas_xy.py
+         │       │   ├── canvas_z.py
+         │       │   ├── icanvas_xy.py
+         │       │   ├── icanvas_z.py
          │       │   ├── __init__.py
+         │       │   ├── robot_arm_renderer.py
+         │       │   ├── trail_renderer.py
+         │       │   └── workspace_boundary_renderer.py
+         │       ├── console/
+         │       │   ├── __init__.py
+         │       │   └── serial_console_panel.py
+         │       ├── controls/
+         │       │   ├── __init__.py
+         │       │   ├── jog_dpad.py
          │       │   ├── jog_panel.py
-         │       │   ├── serial_bar.py
-         │       │   ├── serial_console_panel.py
-         │       │   ├── telemetry_panel.py
-         │       │   └── trajectory_demo_panel.py
+         │       │   └── telemetry_panel.py
          │       ├── engine.py
-         │       ├── gui_event_handler.py
-         │       ├── hardware_bridge_controller.py
-         │       ├── icanvas_xy.py
-         │       ├── icanvas_z.py
+         │       ├── events/
+         │       │   ├── gui_event_handler.py
+         │       │   └── __init__.py
          │       ├── igui.py
          │       ├── __init__.py
-         │       └── theme.py
+         │       ├── layout/
+         │       │   ├── gui_layout_builder.py
+         │       │   └── __init__.py
+         │       ├── server/
+         │       │   ├── __init__.py
+         │       │   └── virtual_server_manager.py
+         │       ├── theme/
+         │       │   ├── __init__.py
+         │       │   └── theme.py
+         │       ├── ticker/
+         │       │   ├── __init__.py
+         │       │   └── simulation_ticker.py
+         │       ├── toolbar/
+         │       │   ├── __init__.py
+         │       │   └── serial_bar.py
+         │       └── trajectory/
+         │           ├── __init__.py
+         │           ├── script_loader_section.py
+         │           └── trajectory_demo_panel.py
          ├── __init__.py
          ├── py.typed
          └── setup/
@@ -218,7 +267,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     15 directories, 87 files
+     32 directories, 119 files
 
 ✨ Features
 -----------

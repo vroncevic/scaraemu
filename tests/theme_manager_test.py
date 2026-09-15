@@ -21,8 +21,9 @@ Info
 
 from __future__ import annotations
 
-import unittest
-from scaraemu.infrastructure.gui.theme import ThemeManager
+from unittest import TestCase, main
+
+from scaraemu.infrastructure.gui.theme.theme import ThemeManager
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -34,7 +35,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class TestThemeManager(unittest.TestCase):
+class TestThemeManager(TestCase):
     '''Unit test cases for ThemeManager.'''
 
     def test_theme_constants(self) -> None:
@@ -46,4 +47,4 @@ class TestThemeManager(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

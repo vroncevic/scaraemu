@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from scaraemu.core.model.scara_pose import ScaraPose
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
 from scaraemu.infrastructure.communication.protocol.command_templates import (
     CommandTemplates
 )

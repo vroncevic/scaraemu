@@ -22,7 +22,7 @@ Info
 from __future__ import annotations
 
 import unittest
-from scaraemu.core.model.scara_step_coords import ScaraStepCoords
+from scaraemu.core.model.kinematics.scara_step_coords import ScaraStepCoords
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

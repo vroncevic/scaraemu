@@ -21,12 +21,12 @@ Info
 
 from __future__ import annotations
 
-import unittest
 from typing import Callable
+from unittest import TestCase, main
 
-from scaraemu.core.model.scara_pose import ScaraPose
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
 from scaraemu.infrastructure.communication.transport.serial_transport import SerialTransport
-from scaraemu.infrastructure.gui.hardware_bridge_controller import HardwareBridgeController
+from scaraemu.infrastructure.gui.bridge.hardware_bridge_controller import HardwareBridgeController
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -70,7 +70,7 @@ class MockTransport:
         self.on_log = on_log
 
 
-class TestHardwareBridgeController(unittest.TestCase):
+class TestHardwareBridgeController(TestCase):
     '''Unit test cases for decoupled HardwareBridgeController.'''
 
     def test_bridge_lifecycle_and_callbacks(self) -> None:
@@ -137,4 +137,4 @@ class TestHardwareBridgeController(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

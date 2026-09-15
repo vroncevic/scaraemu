@@ -23,8 +23,8 @@ from __future__ import annotations
 
 import unittest
 from scaraemu.core.service.iservice import IService
-from scaraemu.core.service.ikinematics_service import IKinematicsService
-from scaraemu.core.service.iemulator_service import IEmulatorService
+from scaraemu.core.service.kinematics.ikinematics_service import IKinematicsService
+from scaraemu.core.service.simulation.iemulator_service import IEmulatorService
 from scaraemu.infrastructure.gui.igui import IGUI
 from scaraemu.infrastructure.command.emulator_command_definition import EmulatorCommandDefinition
 from scaraemu.infrastructure.command.emulator_command_executor import EmulatorCommandExecutor

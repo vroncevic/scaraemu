@@ -21,7 +21,7 @@ Info
 
 from __future__ import annotations
 
-from os.path import exists
+from os.path import abspath, dirname, exists, join
 from typing import Any
 
 from ats_utilities.base.setup.factory import BaseBundleFactory
@@ -34,9 +34,9 @@ from ats_utilities.config_io.setup.factory import ConfigIOBundleFactory
 from ats_utilities.config_io.setup.options import ConfigIOBundleOptions
 from ats_utilities.config_io.setup.keys import ConfigIOBundleKeys
 
-from scaraemu.core.model.scara_geometry import ScaraGeometry
-from scaraemu.core.service.kinematics_service import KinematicsService
-from scaraemu.core.service.emulator_service import EmulatorService
+from scaraemu.core.model.kinematics.scara_geometry import ScaraGeometry
+from scaraemu.core.service.kinematics.kinematics_service import KinematicsService
+from scaraemu.core.service.simulation.emulator_service import EmulatorService
 from scaraemu.core.service.engine import Service
 from scaraemu.infrastructure.communication.transport.serial_transport import SerialTransport
 from scaraemu.infrastructure.gui.engine import ScaraEmuGUI
@@ -77,9 +77,15 @@ class SCARAEmuBundleFactory:
                 | get_version - Returns the factory version.
     '''
 
-    _info_file: str = 'scaraemu/infrastructure/config/scaraemu.cfg'
-    _geometry_config_file: str = 'scaraemu/infrastructure/config/scara_geometry.json'
-    _geometry_scheme_file: str = 'scaraemu/infrastructure/config/scheme.json'
+    _info_file: str = join(
+        dirname(dirname(abspath(__file__))), 'infrastructure', 'config', 'scaraemu.cfg'
+    )
+    _geometry_config_file: str = join(
+        dirname(dirname(abspath(__file__))), 'infrastructure', 'config', 'scara_geometry.json'
+    )
+    _geometry_scheme_file: str = join(
+        dirname(dirname(abspath(__file__))), 'infrastructure', 'config', 'scheme.json'
+    )
 
     @classmethod
     def _resolve_geometry(cls, options: SCARAEmuBundleOptions | None = None) -> ScaraGeometry:

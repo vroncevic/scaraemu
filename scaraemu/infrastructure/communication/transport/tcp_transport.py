@@ -21,12 +21,10 @@ Info
 
 from __future__ import annotations
 
-import socket
+from socket import AF_INET, SOCK_STREAM, socket as Socket, timeout as SocketTimeout
 from threading import Lock, Event, Thread
 from time import sleep
 from typing import Callable, Final
-
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -38,7 +36,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class TcpTransport(ITransport):
+class TcpTransport:
     '''
         TCP socket transport for network-connected SCARA robots.
 
@@ -60,7 +58,7 @@ class TcpTransport(ITransport):
                 | write_line - Sends string line payload over TCP socket.
     '''
 
-    _socket: socket.socket | None
+    _socket: Socket | None
     _lock: Lock
     _stop_event: Event
     _reader_thread: Thread | None
@@ -80,8 +78,8 @@ class TcpTransport(ITransport):
             :exceptions: None.
         '''
         self._socket = None
-        self._lock: Final[Lock] = Lock()
-        self._stop_event: Final[Event] = Event()
+        self._lock = Lock()
+        self._stop_event = Event()
         self._reader_thread = None
         self._on_line = on_line
         self._on_log = on_log
@@ -121,7 +119,7 @@ class TcpTransport(ITransport):
         '''
         self.disconnect()
         try:
-            sock: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock: Socket = Socket(AF_INET, SOCK_STREAM)
             sock.settimeout(2.0)
             sock.connect((port, baudrate))
             sock.settimeout(0.1)
@@ -204,7 +202,7 @@ class TcpTransport(ITransport):
                             self._on_line(line)
                 else:
                     sleep(0.01)
-            except (socket.timeout, BlockingIOError):
+            except (SocketTimeout, BlockingIOError):
                 sleep(0.01)
             except OSError:
                 break

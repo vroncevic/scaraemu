@@ -29,7 +29,6 @@ from ats_utilities.utils.reflection import to_str
 
 from scaraemu.infrastructure.cli.setup.bundle import CLIBundle
 from scaraemu.infrastructure.cli.setup.validator import CLIBundleValidator
-from scaraemu.infrastructure.cli.icli import ICLI
 from scaraemu.core.service.iservice import IService
 from scaraemu.infrastructure.command.icommand_definition import ICommandDefinition
 from scaraemu.infrastructure.command.icommand_executor import ICommandExecutor
@@ -44,7 +43,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class CLI(ICLI):
+class CLI:
     '''
         Adapter that implements CLI commands for the SCARA emulator and visualizer.
 

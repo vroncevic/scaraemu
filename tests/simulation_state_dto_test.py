@@ -22,8 +22,8 @@ Info
 from __future__ import annotations
 
 import unittest
-from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.core.model.simulation_state import SimulationState
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
+from scaraemu.core.model.simulation.simulation_state import SimulationState
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

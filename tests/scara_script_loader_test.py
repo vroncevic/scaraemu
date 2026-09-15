@@ -26,8 +26,8 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from unittest import TestCase, main as unittest_main
 
-from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.core.service.scara_script_loader import ScaraScriptLoader
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
+from scaraemu.core.service.script.scara_script_loader import ScaraScriptLoader
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'

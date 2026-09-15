@@ -22,7 +22,7 @@ Info
 from __future__ import annotations
 
 from unittest import TestCase, main as unittest_main
-from scaraemu.core.model.scara_pose import ScaraPose
+from scaraemu.core.model.kinematics.scara_pose import ScaraPose
 from scaraemu.infrastructure.communication.protocol.command_formatter import CommandFormatter
 from scaraemu.infrastructure.communication.protocol.protocol_parser import ProtocolParser
 

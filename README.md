@@ -131,24 +131,37 @@ Tool structure
          │   ├── __init__.py
          │   ├── model/
          │   │   ├── __init__.py
-         │   │   ├── kinematics_config.py
-         │   │   ├── scara_geometry.py
-         │   │   ├── scara_joints.py
-         │   │   ├── scara_pose.py
-         │   │   ├── scara_step_coords.py
-         │   │   ├── simulation_state.py
-         │   │   └── telemetry.py
+         │   │   ├── kinematics/
+         │   │   │   ├── __init__.py
+         │   │   │   ├── kinematics_config.py
+         │   │   │   ├── scara_geometry.py
+         │   │   │   ├── scara_joints.py
+         │   │   │   ├── scara_pose.py
+         │   │   │   └── scara_step_coords.py
+         │   │   └── simulation/
+         │   │       ├── __init__.py
+         │   │       ├── simulation_state.py
+         │   │       └── telemetry.py
          │   └── service/
-         │       ├── demo_generator.py
-         │       ├── emulator_service.py
          │       ├── engine.py
-         │       ├── iemulator_service.py
-         │       ├── ikinematics_service.py
          │       ├── __init__.py
-         │       ├── iscara_script_loader.py
          │       ├── iservice.py
-         │       ├── kinematics_service.py
-         │       └── scara_script_loader.py
+         │       ├── kinematics/
+         │       │   ├── ikinematics_service.py
+         │       │   ├── __init__.py
+         │       │   ├── kinematics_service.py
+         │       │   ├── kinematics_step_converter.py
+         │       │   └── linear_path_interpolator.py
+         │       ├── script/
+         │       │   ├── __init__.py
+         │       │   ├── iscara_script_loader.py
+         │       │   └── scara_script_loader.py
+         │       └── simulation/
+         │           ├── demo_generator.py
+         │           ├── emulator_service.py
+         │           ├── iemulator_service.py
+         │           ├── __init__.py
+         │           └── motion_trajectory_queue.py
          ├── engine.py
          ├── infrastructure/
          │   ├── cli/
@@ -175,6 +188,10 @@ Tool structure
          │   │   └── __init__.py
          │   ├── communication/
          │   │   ├── __init__.py
+         │   │   ├── preferences/
+         │   │   │   ├── connection_preferences_repository.py
+         │   │   │   ├── iconnection_preferences_repository.py
+         │   │   │   └── __init__.py
          │   │   ├── protocol/
          │   │   │   ├── command_formatter.py
          │   │   │   ├── command_templates.py
@@ -185,36 +202,68 @@ Tool structure
          │   │   │   └── protocol_parser.py
          │   │   ├── serial_device_preferences.py
          │   │   ├── serial_port_scanner.py
+         │   │   ├── server/
+         │   │   │   ├── __init__.py
+         │   │   │   ├── ivirtual_robot_server.py
+         │   │   │   ├── virtual_command_processor.py
+         │   │   │   └── virtual_robot_server.py
          │   │   └── transport/
          │   │       ├── __init__.py
          │   │       ├── itransport.py
-         │   │       ├── ivirtual_robot_server.py
          │   │       ├── serial_transport.py
-         │   │       ├── tcp_transport.py
-         │   │       └── virtual_robot_server.py
+         │   │       └── tcp_transport.py
          │   ├── config/
          │   │   ├── scara_geometry.json
          │   │   ├── scaraemu.cfg
          │   │   ├── scaraemu.logo
          │   │   └── scheme.json
          │   └── gui/
-         │       ├── canvas_xy.py
-         │       ├── canvas_z.py
-         │       ├── components/
+         │       ├── bridge/
+         │       │   ├── hardware_bridge_controller.py
+         │       │   └── __init__.py
+         │       ├── canvas/
+         │       │   ├── canvas_viewport.py
+         │       │   ├── canvas_xy.py
+         │       │   ├── canvas_z.py
+         │       │   ├── icanvas_xy.py
+         │       │   ├── icanvas_z.py
          │       │   ├── __init__.py
+         │       │   ├── robot_arm_renderer.py
+         │       │   ├── trail_renderer.py
+         │       │   └── workspace_boundary_renderer.py
+         │       ├── console/
+         │       │   ├── __init__.py
+         │       │   └── serial_console_panel.py
+         │       ├── controls/
+         │       │   ├── __init__.py
+         │       │   ├── jog_dpad.py
          │       │   ├── jog_panel.py
-         │       │   ├── serial_bar.py
-         │       │   ├── serial_console_panel.py
-         │       │   ├── telemetry_panel.py
-         │       │   └── trajectory_demo_panel.py
+         │       │   └── telemetry_panel.py
          │       ├── engine.py
-         │       ├── gui_event_handler.py
-         │       ├── hardware_bridge_controller.py
-         │       ├── icanvas_xy.py
-         │       ├── icanvas_z.py
+         │       ├── events/
+         │       │   ├── gui_event_handler.py
+         │       │   └── __init__.py
          │       ├── igui.py
          │       ├── __init__.py
-         │       └── theme.py
+         │       ├── layout/
+         │       │   ├── gui_layout_builder.py
+         │       │   └── __init__.py
+         │       ├── server/
+         │       │   ├── __init__.py
+         │       │   └── virtual_server_manager.py
+         │       ├── theme/
+         │       │   ├── __init__.py
+         │       │   └── theme.py
+         │       ├── ticker/
+         │       │   ├── __init__.py
+         │       │   └── simulation_ticker.py
+         │       ├── toolbar/
+         │       │   ├── __init__.py
+         │       │   └── serial_bar.py
+         │       └── trajectory/
+         │           ├── __init__.py
+         │           ├── script_loader_section.py
+         │           └── trajectory_demo_panel.py
          ├── __init__.py
          ├── py.typed
          └── setup/
@@ -229,7 +278,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     15 directories, 87 files
+     32 directories, 119 files
 ```
 </details>
 
@@ -327,26 +376,34 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/core/model/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/core/model/kinematics_config.py` | 18 | 0 | 100%|
-| `scaraemu/core/model/scara_geometry.py` | 37 | 0 | 100%|
-| `scaraemu/core/model/scara_joints.py` | 17 | 0 | 100%|
-| `scaraemu/core/model/scara_pose.py` | 16 | 0 | 100%|
-| `scaraemu/core/model/scara_step_coords.py` | 16 | 0 | 100%|
-| `scaraemu/core/model/simulation_state.py` | 17 | 0 | 100%|
-| `scaraemu/core/model/telemetry.py` | 22 | 0 | 100%|
+| `scaraemu/core/model/kinematics/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/core/model/kinematics/kinematics_config.py` | 18 | 0 | 100%|
+| `scaraemu/core/model/kinematics/scara_geometry.py` | 37 | 0 | 100%|
+| `scaraemu/core/model/kinematics/scara_joints.py` | 17 | 0 | 100%|
+| `scaraemu/core/model/kinematics/scara_pose.py` | 16 | 0 | 100%|
+| `scaraemu/core/model/kinematics/scara_step_coords.py` | 16 | 0 | 100%|
+| `scaraemu/core/model/simulation/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/core/model/simulation/simulation_state.py` | 17 | 0 | 100%|
+| `scaraemu/core/model/simulation/telemetry.py` | 22 | 0 | 100%|
 | `scaraemu/core/service/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/core/service/demo_generator.py` | 58 | 0 | 100%|
-| `scaraemu/core/service/emulator_service.py` | 123 | 15 | 88%|
-| `scaraemu/core/service/engine.py` | 24 | 0 | 100%|
-| `scaraemu/core/service/iemulator_service.py` | 31 | 0 | 100%|
-| `scaraemu/core/service/ikinematics_service.py` | 24 | 0 | 100%|
-| `scaraemu/core/service/iscara_script_loader.py` | 15 | 15 | 0%|
+| `scaraemu/core/service/engine.py` | 23 | 0 | 100%|
 | `scaraemu/core/service/iservice.py` | 17 | 0 | 100%|
-| `scaraemu/core/service/kinematics_service.py` | 126 | 31 | 75%|
-| `scaraemu/core/service/scara_script_loader.py` | 114 | 5 | 96%|
+| `scaraemu/core/service/kinematics/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/core/service/kinematics/ikinematics_service.py` | 24 | 0 | 100%|
+| `scaraemu/core/service/kinematics/kinematics_service.py` | 103 | 30 | 71%|
+| `scaraemu/core/service/kinematics/kinematics_step_converter.py` | 39 | 2 | 95%|
+| `scaraemu/core/service/kinematics/linear_path_interpolator.py` | 27 | 1 | 96%|
+| `scaraemu/core/service/script/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/core/service/script/iscara_script_loader.py` | 15 | 15 | 0%|
+| `scaraemu/core/service/script/scara_script_loader.py` | 114 | 5 | 96%|
+| `scaraemu/core/service/simulation/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/core/service/simulation/demo_generator.py` | 58 | 0 | 100%|
+| `scaraemu/core/service/simulation/emulator_service.py` | 118 | 13 | 89%|
+| `scaraemu/core/service/simulation/iemulator_service.py` | 31 | 0 | 100%|
+| `scaraemu/core/service/simulation/motion_trajectory_queue.py` | 43 | 4 | 91%|
 | `scaraemu/engine.py` | 64 | 64 | 0%|
 | `scaraemu/infrastructure/cli/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/cli/engine.py` | 40 | 7 | 82%|
+| `scaraemu/infrastructure/cli/engine.py` | 39 | 7 | 82%|
 | `scaraemu/infrastructure/cli/icli.py` | 15 | 0 | 100%|
 | `scaraemu/infrastructure/cli/setup/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/cli/setup/bundle.py` | 22 | 1 | 95%|
@@ -365,6 +422,8 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/infrastructure/command/icommand_definition.py` | 14 | 0 | 100%|
 | `scaraemu/infrastructure/command/icommand_executor.py` | 14 | 0 | 100%|
 | `scaraemu/infrastructure/communication/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/communication/preferences/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/communication/preferences/connection_preferences_repository.py` | 55 | 26 | 53%|
 | `scaraemu/infrastructure/communication/protocol/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/command_formatter.py` | 12 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/command_templates.py` | 38 | 0 | 100%|
@@ -372,29 +431,48 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/infrastructure/communication/protocol/firmware_response.py` | 17 | 0 | 100%|
 | `scaraemu/infrastructure/communication/protocol/motion_command_formatter.py` | 51 | 3 | 94%|
 | `scaraemu/infrastructure/communication/protocol/protocol_parser.py` | 116 | 16 | 86%|
-| `scaraemu/infrastructure/communication/serial_device_preferences.py` | 40 | 20 | 50%|
+| `scaraemu/infrastructure/communication/serial_device_preferences.py` | 19 | 2 | 89%|
 | `scaraemu/infrastructure/communication/serial_port_scanner.py` | 43 | 5 | 88%|
+| `scaraemu/infrastructure/communication/server/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/communication/server/virtual_command_processor.py` | 114 | 27 | 76%|
+| `scaraemu/infrastructure/communication/server/virtual_robot_server.py` | 106 | 19 | 82%|
 | `scaraemu/infrastructure/communication/transport/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/infrastructure/communication/transport/itransport.py` | 22 | 5 | 77%|
-| `scaraemu/infrastructure/communication/transport/serial_transport.py` | 102 | 59 | 42%|
-| `scaraemu/infrastructure/communication/transport/tcp_transport.py` | 96 | 55 | 43%|
-| `scaraemu/infrastructure/communication/transport/virtual_robot_server.py` | 201 | 47 | 77%|
+| `scaraemu/infrastructure/communication/transport/serial_transport.py` | 101 | 59 | 42%|
+| `scaraemu/infrastructure/communication/transport/tcp_transport.py` | 95 | 55 | 42%|
 | `scaraemu/infrastructure/gui/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/gui/canvas_xy.py` | 157 | 122 | 22%|
-| `scaraemu/infrastructure/gui/canvas_z.py` | 74 | 46 | 38%|
-| `scaraemu/infrastructure/gui/components/__init__.py` | 9 | 0 | 100%|
-| `scaraemu/infrastructure/gui/components/jog_panel.py` | 83 | 52 | 37%|
-| `scaraemu/infrastructure/gui/components/serial_bar.py` | 98 | 69 | 30%|
-| `scaraemu/infrastructure/gui/components/serial_console_panel.py` | 75 | 52 | 31%|
-| `scaraemu/infrastructure/gui/components/telemetry_panel.py` | 64 | 36 | 44%|
-| `scaraemu/infrastructure/gui/components/trajectory_demo_panel.py` | 91 | 61 | 33%|
-| `scaraemu/infrastructure/gui/engine.py` | 167 | 103 | 38%|
-| `scaraemu/infrastructure/gui/gui_event_handler.py` | 125 | 93 | 26%|
-| `scaraemu/infrastructure/gui/hardware_bridge_controller.py` | 117 | 30 | 74%|
-| `scaraemu/infrastructure/gui/icanvas_xy.py` | 19 | 2 | 89%|
-| `scaraemu/infrastructure/gui/icanvas_z.py` | 17 | 2 | 88%|
+| `scaraemu/infrastructure/gui/bridge/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/bridge/hardware_bridge_controller.py` | 117 | 30 | 74%|
+| `scaraemu/infrastructure/gui/canvas/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/canvas/canvas_viewport.py` | 46 | 22 | 52%|
+| `scaraemu/infrastructure/gui/canvas/canvas_xy.py` | 53 | 23 | 57%|
+| `scaraemu/infrastructure/gui/canvas/canvas_z.py` | 73 | 46 | 37%|
+| `scaraemu/infrastructure/gui/canvas/robot_arm_renderer.py` | 41 | 22 | 46%|
+| `scaraemu/infrastructure/gui/canvas/trail_renderer.py` | 28 | 11 | 61%|
+| `scaraemu/infrastructure/gui/canvas/workspace_boundary_renderer.py` | 77 | 56 | 27%|
+| `scaraemu/infrastructure/gui/console/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/console/serial_console_panel.py` | 75 | 52 | 31%|
+| `scaraemu/infrastructure/gui/controls/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/controls/jog_dpad.py` | 47 | 24 | 49%|
+| `scaraemu/infrastructure/gui/controls/jog_panel.py` | 60 | 34 | 43%|
+| `scaraemu/infrastructure/gui/controls/telemetry_panel.py` | 64 | 36 | 44%|
+| `scaraemu/infrastructure/gui/engine.py` | 79 | 31 | 61%|
+| `scaraemu/infrastructure/gui/events/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/events/gui_event_handler.py` | 125 | 93 | 26%|
 | `scaraemu/infrastructure/gui/igui.py` | 15 | 0 | 100%|
-| `scaraemu/infrastructure/gui/theme.py` | 28 | 0 | 100%|
+| `scaraemu/infrastructure/gui/layout/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/layout/gui_layout_builder.py` | 84 | 50 | 40%|
+| `scaraemu/infrastructure/gui/server/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/server/virtual_server_manager.py` | 42 | 18 | 57%|
+| `scaraemu/infrastructure/gui/theme/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/theme/theme.py` | 28 | 0 | 100%|
+| `scaraemu/infrastructure/gui/ticker/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/ticker/simulation_ticker.py` | 56 | 27 | 52%|
+| `scaraemu/infrastructure/gui/toolbar/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/toolbar/serial_bar.py` | 99 | 69 | 30%|
+| `scaraemu/infrastructure/gui/trajectory/__init__.py` | 9 | 0 | 100%|
+| `scaraemu/infrastructure/gui/trajectory/script_loader_section.py` | 55 | 32 | 42%|
+| `scaraemu/infrastructure/gui/trajectory/trajectory_demo_panel.py` | 53 | 30 | 43%|
 | `scaraemu/setup/__init__.py` | 9 | 0 | 100%|
 | `scaraemu/setup/bundle.py` | 25 | 1 | 96%|
 | `scaraemu/setup/dep_validator.py` | 36 | 1 | 97%|
@@ -405,7 +483,7 @@ The robot dimensions and physical boundaries can be customized in [`scara_geomet
 | `scaraemu/setup/options.py` | 22 | 0 | 100%|
 | `scaraemu/setup/registry.py` | 34 | 1 | 97%|
 | `scaraemu/setup/validator.py` | 53 | 5 | 91%|
-| **Total** | 3540 | 1053 | 70% |
+| **Total** | 4010 | 1102 | 73% |
 
 </details>
 
