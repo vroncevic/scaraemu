@@ -1,2 +1,3 @@
 ats-utilities
 pyserial
+scaralang

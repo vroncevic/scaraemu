@@ -193,7 +193,10 @@ Tool structure
          │   │   ├── serial_port_scanner.py
          │   │   ├── server/
          │   │   │   ├── __init__.py
+         │   │   │   ├── ivirtual_binary_frame_processor.py
          │   │   │   ├── ivirtual_robot_server.py
+         │   │   │   ├── virtual_binary_frame_processor.py
+         │   │   │   ├── virtual_binary_frame_processor_factory.py
          │   │   │   ├── virtual_command_processor.py
          │   │   │   └── virtual_robot_server.py
          │   │   └── transport/
@@ -267,7 +270,7 @@ Tool structure
              ├── registry.py
              └── validator.py
 
-     32 directories, 119 files
+     32 directories, 122 files
 
 ✨ Features
 -----------

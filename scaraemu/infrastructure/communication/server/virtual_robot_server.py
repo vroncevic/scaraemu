@@ -32,7 +32,16 @@ from socket import (
 from threading import Event, Lock, Thread
 from typing import Callable, Final
 
+from scaralang.core.model.protocol.binary_frame import BinaryFrame
+from scaralang.infrastructure.communication.protocol.binary.builder.binary_frame_builder import BinaryFrameBuilder
+from scaralang.infrastructure.communication.protocol.binary.builder.binary_frame_builder_factory import BinaryFrameBuilderFactory
+from scaralang.infrastructure.communication.protocol.binary.parser.binary_frame_parser import BinaryFrameParser
+from scaralang.infrastructure.communication.protocol.binary.parser.binary_frame_parser_factory import BinaryFrameParserFactory
+from scaralang.infrastructure.communication.protocol.binary.parser.parser_state import ParserState
 from scaraemu.core.service.simulation.iemulator_service import IEmulatorService
+from scaraemu.infrastructure.communication.server.virtual_binary_frame_processor import (
+    VirtualBinaryFrameProcessor,
+)
 from scaraemu.infrastructure.communication.server.virtual_command_processor import (
     VirtualCommandProcessor,
 )
@@ -55,6 +64,9 @@ class VirtualRobotServer:
 
             :attributes:
                 | _processor - VirtualCommandProcessor ASCII command dispatcher.
+                | _binary_processor - VirtualBinaryFrameProcessor binary frame dispatcher.
+                | _frame_parser - Streaming binary frame parser with CRC16 validation.
+                | _frame_builder - Binary wire frame encoder.
                 | _on_log - Optional log message consumer callback.
                 | _server_socket - Listening socket handle.
                 | _server_thread - Background socket listener thread.
@@ -72,6 +84,9 @@ class VirtualRobotServer:
     '''
 
     _processor: Final[VirtualCommandProcessor]
+    _binary_processor: Final[VirtualBinaryFrameProcessor]
+    _frame_parser: Final[BinaryFrameParser]
+    _frame_builder: Final[BinaryFrameBuilder]
     _on_log: Callable[[str], None] | None
     _server_socket: Socket | None
     _server_thread: Thread | None
@@ -92,6 +107,9 @@ class VirtualRobotServer:
             :exceptions: None.
         '''
         self._processor = VirtualCommandProcessor(emulator=emulator)
+        self._binary_processor = VirtualBinaryFrameProcessor(emulator=emulator)
+        self._frame_parser = BinaryFrameParserFactory.create()
+        self._frame_builder = BinaryFrameBuilderFactory.create()
         self._on_log = on_log
         self._server_socket = None
         self._server_thread = None
@@ -122,6 +140,7 @@ class VirtualRobotServer:
                 self._port = srv.getsockname()[1]
                 self._stop_event.clear()
                 self._processor.reset()
+                self._binary_processor.reset()
                 self._server_thread = Thread(target=self._server_loop, daemon=True)
                 self._server_thread.start()
                 if self._on_log is not None:
@@ -189,28 +208,37 @@ class VirtualRobotServer:
 
     def _handle_client(self, *, client_sock: Socket) -> None:
         '''
-            Manages reading lines and responding to connected CAM client.
+            Manages reading frames and lines, responding to connected client.
 
             :param client_sock: Connected client socket.
             :exceptions: None.
         '''
         client_sock.settimeout(0.5)
-        buffer: str = ''
+        text_buffer: str = ''
+        self._frame_parser.reset()
         try:
             while not self._stop_event.is_set():
                 try:
                     data: bytes = client_sock.recv(1024)
                     if not data:
                         break
-                    buffer += data.decode('utf-8', errors='replace')
-                    while '\n' in buffer:
-                        line: str
-                        line, buffer = buffer.split('\n', 1)
-                        line = line.strip()
-                        if line:
-                            responses: list[str] = self._processor.process_command(cmd=line)
-                            for resp in responses:
-                                client_sock.sendall((resp + '\n').encode('utf-8'))
+
+                    if data.startswith(b'\xaa\x55') or self._frame_parser.get_state() != ParserState.SEARCH_SOF1:
+                        frames: tuple[BinaryFrame, ...] = self._frame_parser.feed_bytes(data)
+                        for frame in frames:
+                            resp_frames: list[BinaryFrame] = self._binary_processor.process_frame(frame=frame)
+                            for resp in resp_frames:
+                                client_sock.sendall(self._frame_builder.pack_frame(frame=resp))
+                    else:
+                        text_buffer += data.decode('utf-8', errors='replace')
+                        while '\n' in text_buffer:
+                            line: str
+                            line, text_buffer = text_buffer.split('\n', 1)
+                            line = line.strip()
+                            if line:
+                                responses: list[str] = self._processor.process_command(cmd=line)
+                                for resp in responses:
+                                    client_sock.sendall((resp + '\n').encode('utf-8'))
                 except SocketTimeout:
                     continue
         except OSError:

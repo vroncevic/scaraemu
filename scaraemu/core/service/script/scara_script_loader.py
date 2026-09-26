@@ -23,9 +23,15 @@ from __future__ import annotations
 
 from json import loads
 from math import atan2, cos, hypot, pi, sin
-from re import compile as re_compile, Pattern
-from typing import ClassVar
+from typing import Final
 
+from scaralang.core.model.dsl.ast.command_type import CommandType
+from scaralang.core.model.dsl.ast.instruction import Instruction
+from scaralang.core.model.dsl.ast.program import Program
+from scaralang.core.service.dsl.lexer.scara_lexer import ScaraLexer
+from scaralang.core.service.dsl.lexer.scara_lexer_factory import ScaraLexerFactory
+from scaralang.core.service.dsl.parser.scara_parser import ScaraParser
+from scaralang.core.service.dsl.parser.scara_parser_factory import ScaraParserFactory
 from scaraemu.core.model.kinematics.scara_pose import ScaraPose
 
 __author__ = 'Vladimir Roncevic'
@@ -44,16 +50,37 @@ class ScaraScriptLoader:
 
         It defines:
 
+            :attributes:
+                | _lexer - Lexical analyzer extracting DSL tokens.
+                | _parser - Syntax parser building instruction AST.
             :methods:
+                | __init__ - Initializes script loader with scaralang toolchain.
                 | load_from_file - Reads and parses script or plan from filesystem.
                 | parse_script - Parses raw script text content into sequence of poses.
-                | _extract_params - Extracts key-value parameters from command line tokens.
                 | _generate_arc_points - Generates interpolated arc intermediate poses.
     '''
 
-    _PARAM_PATTERN: ClassVar[Pattern[str]] = re_compile(
-        r'([A-Za-z_]+)\s*=\s*([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)'
-    )
+    _lexer: Final[ScaraLexer]
+    _parser: Final[ScaraParser]
+
+    def __init__(
+        self,
+        *,
+        lexer: ScaraLexer | None = None,
+        parser: ScaraParser | None = None,
+    ) -> None:
+        '''
+            Initializes script loader with scaralang parser collaborators.
+
+            :param lexer: Optional custom ScaraLexer instance.
+            :param parser: Optional custom ScaraParser instance.
+            :exceptions: None.
+        '''
+        self._lexer = lexer if lexer is not None else ScaraLexerFactory.create()
+        self._parser = (
+            parser if parser is not None
+            else ScaraParserFactory.create(lexer=self._lexer)
+        )
 
     def load_from_file(self, *, filepath: str) -> list[ScaraPose]:
         '''
@@ -92,43 +119,32 @@ class ScaraScriptLoader:
             :return: List of ScaraPose waypoints.
             :exceptions: ValueError.
         '''
+        program: Program = self._parser.parse(source=source)
         poses: list[ScaraPose] = []
         curr_x: float = 180.0
         curr_y: float = 0.0
         curr_z: float = 20.0
         curr_phi: float = 0.0
 
-        for raw_line in source.splitlines():
-            line = raw_line.strip()
-            if not line or line.startswith('#'):
-                continue
-            if '#' in line:
-                line = line.split('#', 1)[0].strip()
-
-            tokens = line.split()
-            if not tokens:
-                continue
-
-            cmd = tokens[0].upper()
-            params = self._extract_params(line=line)
-
-            match cmd:
-                case 'HOME':
+        for instruction in program.instructions:
+            params = instruction.parameters
+            match instruction.command_type:
+                case CommandType.HOME:
                     curr_x, curr_y, curr_z, curr_phi = 180.0, 0.0, 20.0, 0.0
                     poses.append(ScaraPose(x=curr_x, y=curr_y, z=curr_z, phi=curr_phi))
 
-                case 'MOVE_L' | 'MOVE_J':
-                    curr_x = params.get('X', curr_x)
-                    curr_y = params.get('Y', curr_y)
-                    curr_z = params.get('Z', curr_z)
-                    curr_phi = params.get('PHI', curr_phi)
+                case CommandType.MOVE_L | CommandType.MOVE_J:
+                    curr_x = float(params.get('X', curr_x))
+                    curr_y = float(params.get('Y', curr_y))
+                    curr_z = float(params.get('Z', curr_z))
+                    curr_phi = float(params.get('PHI', curr_phi))
                     poses.append(ScaraPose(x=curr_x, y=curr_y, z=curr_z, phi=curr_phi))
 
-                case 'JUMP':
-                    target_x = params.get('X', curr_x)
-                    target_y = params.get('Y', curr_y)
-                    target_z = params.get('Z', curr_z)
-                    arch = params.get('ARCH', 25.0)
+                case CommandType.JUMP:
+                    target_x = float(params.get('X', curr_x))
+                    target_y = float(params.get('Y', curr_y))
+                    target_z = float(params.get('Z', curr_z))
+                    arch = float(params.get('ARCH', 25.0))
                     apex_z = max(curr_z, target_z) + arch
                     mid_x = (curr_x + target_x) * 0.5
                     mid_y = (curr_y + target_y) * 0.5
@@ -137,22 +153,22 @@ class ScaraScriptLoader:
                     curr_x, curr_y, curr_z = target_x, target_y, target_z
                     poses.append(ScaraPose(x=curr_x, y=curr_y, z=curr_z, phi=curr_phi))
 
-                case 'APPROACH':
-                    dist = params.get('DIST', 10.0)
+                case CommandType.APPROACH:
+                    dist = float(params.get('DIST', 10.0))
                     curr_z = max(0.0, curr_z - dist)
                     poses.append(ScaraPose(x=curr_x, y=curr_y, z=curr_z, phi=curr_phi))
 
-                case 'RETRACT':
-                    dist = params.get('DIST', 10.0)
+                case CommandType.RETRACT:
+                    dist = float(params.get('DIST', 10.0))
                     curr_z = curr_z + dist
                     poses.append(ScaraPose(x=curr_x, y=curr_y, z=curr_z, phi=curr_phi))
 
-                case 'ARC_CW' | 'ARC_CCW':
-                    target_x = params.get('X', curr_x)
-                    target_y = params.get('Y', curr_y)
-                    target_z = params.get('Z', curr_z)
-                    offset_i = params.get('I', 0.0)
-                    offset_j = params.get('J', 0.0)
+                case CommandType.ARC_CW | CommandType.ARC_CCW:
+                    target_x = float(params.get('X', curr_x))
+                    target_y = float(params.get('Y', curr_y))
+                    target_z = float(params.get('Z', curr_z))
+                    offset_i = float(params.get('I', 0.0))
+                    offset_j = float(params.get('J', 0.0))
                     arc_pts = self._generate_arc_points(
                         start_x=curr_x,
                         start_y=curr_y,
@@ -160,7 +176,7 @@ class ScaraScriptLoader:
                         target_y=target_y,
                         offset_i=offset_i,
                         offset_j=offset_j,
-                        is_cw=(cmd == 'ARC_CW'),
+                        is_cw=(instruction.command_type == CommandType.ARC_CW),
                         z=target_z,
                         phi=curr_phi,
                     )
@@ -171,20 +187,6 @@ class ScaraScriptLoader:
                     pass
 
         return poses
-
-    def _extract_params(self, *, line: str) -> dict[str, float]:
-        '''
-            Extracts key-value numerical parameters from a command line string.
-
-            :param line: Raw command line string.
-            :return: Dictionary of uppercase parameter names to numerical values.
-        '''
-        params: dict[str, float] = {}
-        for match in self._PARAM_PATTERN.finditer(line):
-            key = match.group(1).upper()
-            val = float(match.group(2))
-            params[key] = val
-        return params
 
     def _generate_arc_points(
         self,
