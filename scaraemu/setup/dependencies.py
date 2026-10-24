@@ -25,10 +25,12 @@ from typing import TypedDict
 
 from ats_utilities.base.setup.bundle import BaseBundle
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
+
+from scaraemu.core.service.emulation.iservice import IEmulationService
+from scaraemu.core.service.kinematics.imanipulator import IManipulatorKinematics
 from scaraemu.infrastructure.cli.icli import ICLI
+from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -48,14 +50,16 @@ class SCARAEmuBundleDependencies(TypedDict, total=False):
 
             :attributes:
                 | base - BaseBundle instance.
-                | service - IService facade instance.
+                | bounds - ScaraBounds kinematics boundary model.
+                | kinematics - IManipulatorKinematics kinematics solver.
+                | emulation_service - IEmulationService digital twin emulation service.
                 | gui - IGUI presentation instance.
-                | transport - ITransport communication transport instance.
                 | cli - ICLI adapter instance.
     '''
 
     base: BaseBundle
-    service: IService
+    bounds: ScaraBounds
+    kinematics: IManipulatorKinematics
+    emulation_service: IEmulationService
     gui: IGUI
-    transport: ITransport
     cli: ICLI

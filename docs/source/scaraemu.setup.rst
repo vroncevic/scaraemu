@@ -1,6 +1,14 @@
 scaraemu.setup package
 ======================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   scaraemu.setup.kinematics
+
 Submodules
 ----------
 

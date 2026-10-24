@@ -23,19 +23,18 @@ from __future__ import annotations
 
 from ats_utilities.option.imanager import IOptionManager
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.gui.igui import IGUI
 from scaraemu.infrastructure.cli.setup.options import CLIBundleOptions
 from scaraemu.infrastructure.cli.setup.opt_validator import CLIBundleOptionsValidator
 from scaraemu.infrastructure.cli.setup.bundle import CLIBundle
 from scaraemu.infrastructure.cli.setup.keys import CLIBundleKeys
 from scaraemu.infrastructure.cli.setup.registry import CLIBundleRegistry
 from scaraemu.infrastructure.cli.setup.dependencies import CLIBundleDependencies
-from scaraemu.infrastructure.command.command import CommandBundle
-from scaraemu.infrastructure.command.icommand_definition import ICommandDefinition
-from scaraemu.infrastructure.command.icommand_executor import ICommandExecutor
-from scaraemu.infrastructure.command.emulator_command_definition import EmulatorCommandDefinition
-from scaraemu.infrastructure.command.emulator_command_executor import EmulatorCommandExecutor
+from scaraemu.infrastructure.command.bundle import CommandBundle
+from scaraemu.infrastructure.command.definition import EmulatorCommandDefinition
+from scaraemu.infrastructure.command.executor import EmulatorCommandExecutor
+from scaraemu.infrastructure.command.idefinition import ICommandDefinition
+from scaraemu.infrastructure.command.iexecutor import ICommandExecutor
+from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -54,36 +53,34 @@ class CLIBundleFactory:
         It defines:
 
             :methods:
-                | create_bundle - Creates the CLI bundle with optional pre-configured options.
+                | create - Creates the CLI bundle with optional pre-configured options.
                 | get_version - Returns the factory version.
     '''
 
     @classmethod
-    def create_bundle(cls, options: CLIBundleOptions) -> CLIBundle:
+    def create(cls, options: CLIBundleOptions) -> CLIBundle:
         '''
-            Creates the CLI bundle with optional pre-configured options.
+            Creates the CLI bundle with pre-configured options.
 
             :param options: The CLI bundle options.
             :return: The CLI bundle.
             :exceptions:
                 | ATSValueError: The CLI bundle options must be provided and have proper values.
-                | ATSTypeError: The CLI bundle options must match types.
+                | ATSTypeError:  The CLI bundle options must match types.
         '''
         CLIBundleOptionsValidator.validate(options)
 
-        service: IService | None = options.get(CLIBundleKeys.OPTION_SERVICE) if options else None
-        parser: IOptionManager | None = options.get(CLIBundleKeys.OPTION_PARSER) if options else None
-        gui: IGUI | None = options.get(CLIBundleKeys.OPTION_GUI) if options else None
+        parser: IOptionManager = options[CLIBundleKeys.OPTION_PARSER]
+        launcher: IGUI = options[CLIBundleKeys.OPTION_LAUNCHER]
 
         emulator_definition: ICommandDefinition = EmulatorCommandDefinition()
-        emulator_executor: ICommandExecutor[ICommandDefinition, object, object, object] = EmulatorCommandExecutor(
-            definition=emulator_definition,
-            gui=gui
+        emulator_executor: ICommandExecutor[ICommandDefinition, object, object] = EmulatorCommandExecutor(
+            definition=emulator_definition, launcher=launcher
         )
         emulator_cmd: CommandBundle = CommandBundle(definition=emulator_definition, executor=emulator_executor)
 
         return CLIBundleRegistry.create_bundle(
-            dependencies=CLIBundleDependencies(service=service, parser=parser, commands=[emulator_cmd])
+            dependencies=CLIBundleDependencies(parser=parser, commands=[emulator_cmd])
         )
 
     @classmethod

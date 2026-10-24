@@ -41,7 +41,7 @@ with open(join(THIS_DIR, 'README.md'), encoding='utf-8') as readme:
     long_description = readme.read()
 
 PROGRAMMING_LANG: str = 'Programming Language :: Python ::'
-VERSIONS: list[str] = ['3.10', '3.11', '3.12', '3.13', '3.14']
+VERSIONS: list[str] = ['3.12', '3.13', '3.14']
 SUPPORTED_PY_VERSIONS: list[str] = [f'{PROGRAMMING_LANG} {VERSION}' for VERSION in VERSIONS]
 PYP_CLASSIFIERS: list[str] = SUPPORTED_PY_VERSIONS
 
@@ -82,11 +82,6 @@ setup(
     platforms='POSIX',
     classifiers=PYP_CLASSIFIERS,
     packages=find_packages(exclude=['tests', 'tests.*', '*.*.pyc', '*.pyo']),
-    install_requires=['ats-utilities', 'pyserial', 'scaralang'],
-    package_data={'scaraemu': find_package_data('scaraemu')},
-    entry_points={
-        'console_scripts': [
-            'scaraemu=main:main'
-        ]
-    }
+    install_requires=['ats-utilities', 'pyserial', 'scaralang', 'scaracom'],
+    package_data={'scaraemu': find_package_data('scaraemu')}
 )

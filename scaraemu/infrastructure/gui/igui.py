@@ -42,7 +42,9 @@ class IGUI(Protocol):
 
             :methods:
                 | is_initialized - Returns initialization status.
+                | load_file - Sets initial plan or DSL script to load upon GUI startup.
                 | run - Starts the Tkinter main event loop.
+                | get_version - Returns GUI interface version string.
     '''
 
     def is_initialized(self) -> bool:
@@ -62,4 +64,11 @@ class IGUI(Protocol):
     def run(self) -> None:
         '''
             Starts the Tkinter main event loop.
+        '''
+
+    def get_version(self) -> str:
+        '''
+            Returns GUI interface version string.
+
+            :return: Semantic version string.
         '''

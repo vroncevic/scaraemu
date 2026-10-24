@@ -90,5 +90,6 @@ class SCARAEmuBundleOptionsValidator:
         try:
             cls.validate(options)
             return True
+
         except (ATSValueError, ATSTypeError):
             return False

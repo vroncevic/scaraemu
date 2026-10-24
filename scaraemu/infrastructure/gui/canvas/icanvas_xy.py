@@ -21,11 +21,11 @@ Info
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable, Callable
 from collections.abc import Sequence
+from typing import Protocol, runtime_checkable
 
-from scaraemu.core.model.kinematics.scara_pose import ScaraPose
-from scaraemu.core.model.kinematics.scara_joints import ScaraJoints
+from scaraemu.core.model.kinematics.joints import ScaraJoints
+from scaraemu.core.model.kinematics.pose import ScaraPose
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -46,7 +46,7 @@ class ICanvasXY(Protocol):
 
             :methods:
                 | redraw - Renders robot links, reach boundaries, and path trail.
-                | set_on_target_click - Registers click/drag callback for commanding XY coordinates.
+                | flash_unreachable - Displays transient visual warning for unreachable coordinates.
     '''
 
     def redraw(
@@ -54,20 +54,23 @@ class ICanvasXY(Protocol):
         pose: ScaraPose,
         joints: ScaraJoints,
         trail_points: Sequence[tuple[float, float]],
-        current_target: ScaraPose | None = None
+        current_target: ScaraPose,
+        planned_path: Sequence[tuple[float, float]] = (),
     ) -> None:
         '''
-            Renders robot links, reach boundaries, and path trail.
+            Renders robot links, reach boundaries, path trail, and planned trajectory.
 
             :param pose: Current Cartesian pose.
             :param joints: Current articulated joint angles.
             :param trail_points: Sequence of historical trail points.
-            :param current_target: Optional active target pose.
+            :param current_target: Active target pose.
+            :param planned_path: Sequence of planned trajectory (x, y) coordinates.
         '''
 
-    def set_on_target_click(self, callback: Callable[[float, float], None]) -> None:
+    def flash_unreachable(self, x: float, y: float) -> None:
         '''
-            Registers click/drag callback for commanding XY coordinates.
+            Displays transient visual warning for unreachable coordinates.
 
-            :param callback: Callback accepting (x, y) coordinates in mm.
+            :param x: Target X Cartesian coordinate in mm.
+            :param y: Target Y Cartesian coordinate in mm.
         '''

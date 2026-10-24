@@ -2,7 +2,7 @@
 
 '''
 Package
-    layout
+    scaraemu/infrastructure/gui/layout
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -22,7 +22,7 @@ Info
 from __future__ import annotations
 
 __author__ = 'Vladimir Roncevic'
-__copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
+__copyright__ = 'Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
 __version__ = '1.0.2'

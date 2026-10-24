@@ -21,9 +21,9 @@ Info
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable, Callable
+from typing import Protocol, runtime_checkable
 
-from scaraemu.core.model.kinematics.scara_pose import ScaraPose
+from scaraemu.core.model.kinematics.pose import ScaraPose
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -44,20 +44,20 @@ class ICanvasZ(Protocol):
 
             :methods:
                 | redraw - Renders lead screw tower, carriage position, and vertical elevation.
-                | set_on_target_click - Registers click/drag callback for commanding Z coordinate.
+                | clear - Clears all graphical elements from the canvas.
     '''
 
-    def redraw(self, pose: ScaraPose, current_target: ScaraPose | None = None) -> None:
+    def redraw(
+        self, pose: ScaraPose, current_target: ScaraPose
+    ) -> None:
         '''
             Renders lead screw tower, carriage position, and vertical elevation.
 
             :param pose: Current Cartesian pose.
-            :param current_target: Optional active target pose.
+            :param current_target: Active target pose.
         '''
 
-    def set_on_target_click(self, callback: Callable[[float], None]) -> None:
+    def clear(self) -> None:
         '''
-            Registers click/drag callback for commanding Z coordinate.
-
-            :param callback: Callback accepting target Z height in mm.
+            Clears all graphical elements from the canvas.
         '''

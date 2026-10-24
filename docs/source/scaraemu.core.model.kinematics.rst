@@ -7,11 +7,9 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   scaraemu.core.model.kinematics.kinematics_config
-   scaraemu.core.model.kinematics.scara_geometry
-   scaraemu.core.model.kinematics.scara_joints
-   scaraemu.core.model.kinematics.scara_pose
-   scaraemu.core.model.kinematics.scara_step_coords
+   scaraemu.core.model.kinematics.joints
+   scaraemu.core.model.kinematics.pose
+   scaraemu.core.model.kinematics.step_coords
 
 Module contents
 ---------------

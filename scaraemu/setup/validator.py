@@ -21,16 +21,12 @@ Info
 
 from __future__ import annotations
 
-from ats_utilities.base.setup.bundle import BaseBundle
 from ats_utilities.exceptions import ATSValueError, ATSTypeError
 from ats_utilities.validation.check_value import not_none
 from ats_utilities.validation.check_type import istype
 
 from scaraemu.setup.bundle import SCARAEmuBundle
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
-from scaraemu.infrastructure.cli.icli import ICLI
+from scaraemu.setup.keys import SCARAEmuBundleKeys
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -64,33 +60,14 @@ class SCARAEmuBundleValidator:
                 | ATSTypeError: The scaraemu bundle attributes must match required interfaces.
         '''
         ctx: str = 'scaraemu_bundle_validator::validate(...)'
-        msg_bundle_none: str = 'the scaraemu bundle must be provided'
-        msg_bundle_istype: str = 'the scaraemu bundle must be an instance of SCARAEmuBundle'
-        msg_base_none: str = 'the base bundle must be provided'
-        msg_service_none: str = 'the service must be provided'
-        msg_gui_none: str = 'the gui must be provided'
-        msg_transport_none: str = 'the transport must be provided'
-        msg_cli_none: str = 'the cli must be provided'
-        msg_base_istype: str = 'the base bundle must be an instance of BaseBundle'
-        msg_service_istype: str = 'the service must be an instance of IService'
-        msg_gui_istype: str = 'the gui must be an instance of IGUI'
-        msg_transport_istype: str = 'the transport must be an instance of ITransport'
-        msg_cli_istype: str = 'the cli must be an instance of ICLI'
+        not_none(bundle, ctx, 'the scaraemu bundle must be provided')
+        istype(bundle, SCARAEmuBundle, ctx, 'the scaraemu bundle must be an instance of SCARAEmuBundle')
 
-        not_none(bundle, ctx, msg_bundle_none)
-        istype(bundle, SCARAEmuBundle, ctx, msg_bundle_istype)
-
-        not_none(bundle.base, ctx, msg_base_none)
-        not_none(bundle.service, ctx, msg_service_none)
-        not_none(bundle.gui, ctx, msg_gui_none)
-        not_none(bundle.transport, ctx, msg_transport_none)
-        not_none(bundle.cli, ctx, msg_cli_none)
-
-        istype(bundle.base, BaseBundle, ctx, msg_base_istype)
-        istype(bundle.service, IService, ctx, msg_service_istype)
-        istype(bundle.gui, IGUI, ctx, msg_gui_istype)
-        istype(bundle.transport, ITransport, ctx, msg_transport_istype)
-        istype(bundle.cli, ICLI, ctx, msg_cli_istype)
+        for attr_name, expected_type in SCARAEmuBundleKeys.get_dependency_to_type().items():
+            attribute = getattr(bundle, attr_name, None)
+            display_name: str = attr_name.replace('_', ' ')
+            not_none(attribute, ctx, f'the {display_name} must be provided')
+            istype(attribute, expected_type, ctx, f'the {display_name} must be an instance of {expected_type.__name__}')
 
     @classmethod
     def is_valid(cls, bundle: SCARAEmuBundle) -> bool:
@@ -104,5 +81,6 @@ class SCARAEmuBundleValidator:
         try:
             cls.validate(bundle)
             return True
+
         except (ATSValueError, ATSTypeError):
             return False

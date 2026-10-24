@@ -25,7 +25,6 @@ from typing import TypedDict
 
 from ats_utilities.option.imanager import IOptionManager
 
-from scaraemu.core.service.iservice import IService
 from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
@@ -38,18 +37,16 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class CLIBundleOptions(TypedDict, total=False):
+class CLIBundleOptions(TypedDict):
     '''
         CLI bundle options specification.
 
         It defines:
 
             :attributes:
-                | service - The service interface instance.
                 | parser - The option parser interface instance.
-                | gui - The GUI presentation interface instance.
+                | launcher - The emulator application launcher instance.
     '''
 
-    service: IService
     parser: IOptionManager
-    gui: IGUI
+    launcher: IGUI

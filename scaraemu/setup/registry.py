@@ -21,12 +21,6 @@ Info
 
 from __future__ import annotations
 
-from ats_utilities.base.setup.bundle import BaseBundle
-
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
-from scaraemu.infrastructure.cli.icli import ICLI
 from scaraemu.setup.bundle import SCARAEmuBundle
 from scaraemu.setup.validator import SCARAEmuBundleValidator
 from scaraemu.setup.keys import SCARAEmuBundleKeys
@@ -67,14 +61,13 @@ class SCARAEmuBundleRegistry:
         '''
         SCARAEmuBundleDependenciesValidator.validate(dependencies)
 
-        base: BaseBundle | None = dependencies.get(SCARAEmuBundleKeys.DEPENDENCY_BASE) if dependencies else None
-        service: IService | None = dependencies.get(SCARAEmuBundleKeys.DEPENDENCY_SERVICE) if dependencies else None
-        gui: IGUI | None = dependencies.get(SCARAEmuBundleKeys.DEPENDENCY_GUI) if dependencies else None
-        transport: ITransport | None = dependencies.get(SCARAEmuBundleKeys.DEPENDENCY_TRANSPORT) if dependencies else None
-        cli: ICLI | None = dependencies.get(SCARAEmuBundleKeys.DEPENDENCY_CLI) if dependencies else None
-
         bundle: SCARAEmuBundle = SCARAEmuBundle(
-            base=base, service=service, gui=gui, transport=transport, cli=cli
+            base=dependencies[SCARAEmuBundleKeys.DEPENDENCY_BASE],
+            bounds=dependencies[SCARAEmuBundleKeys.DEPENDENCY_BOUNDS],
+            kinematics=dependencies[SCARAEmuBundleKeys.DEPENDENCY_KINEMATICS],
+            emulation_service=dependencies[SCARAEmuBundleKeys.DEPENDENCY_EMULATION_SERVICE],
+            gui=dependencies[SCARAEmuBundleKeys.DEPENDENCY_GUI],
+            cli=dependencies[SCARAEmuBundleKeys.DEPENDENCY_CLI],
         )
         SCARAEmuBundleValidator.validate(bundle)
 

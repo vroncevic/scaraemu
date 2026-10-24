@@ -17,3 +17,6 @@ build/
 dist/
 *.egg-info/
 docs/build/
+
+# Architecture Audit
+.issues/

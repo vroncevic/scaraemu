@@ -25,6 +25,7 @@ from sys import exit as sys_exit
 
 from scaraemu.engine import SCARAEmu
 from scaraemu.setup.factory import SCARAEmuBundleFactory
+from scaraemu.setup.options import SCARAEmuBundleOptions
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -43,7 +44,9 @@ def main() -> bool:
         :return: True if successful, False otherwise.
         :exceptions: None.
     '''
-    scaraemu: SCARAEmu = SCARAEmu(SCARAEmuBundleFactory.create_bundle())
+    scaraemu: SCARAEmu = SCARAEmu(
+        SCARAEmuBundleFactory.create(SCARAEmuBundleOptions())
+    )
 
     return scaraemu.process()
 

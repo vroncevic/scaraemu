@@ -23,18 +23,26 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from tkinter import Canvas, Event, Widget
-from typing import Callable, Final
+from typing import Final
 
-from scaraemu.core.model.kinematics.scara_geometry import ScaraGeometry
-from scaraemu.core.model.kinematics.scara_joints import ScaraJoints
-from scaraemu.core.model.kinematics.scara_pose import ScaraPose
-from scaraemu.infrastructure.gui.canvas.canvas_viewport import CanvasViewport
-from scaraemu.infrastructure.gui.canvas.robot_arm_renderer import RobotArmRenderer
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
+from scaralang.core.service.kinematics.workspace.boundary.iservice import IWorkspaceBoundaryService
+
+from scaraemu.core.model.kinematics.joints import ScaraJoints
+from scaraemu.core.model.kinematics.pose import ScaraPose
+from scaraemu.infrastructure.gui.canvas.config import CanvasConfig
+from scaraemu.infrastructure.gui.canvas.viewport.coordinate_transformer import CoordinateTransformer
+from scaraemu.infrastructure.gui.canvas.viewport.viewport import Viewport
+from scaraemu.infrastructure.gui.canvas.viewport.icoordinate_transformer import ICoordinateTransformer
+from scaraemu.infrastructure.gui.canvas.renderer.manipulator_render_context import ManipulatorRenderContext
+from scaraemu.infrastructure.gui.canvas.renderer.manipulator_arm_renderer import ManipulatorArmRenderer
+from scaraemu.infrastructure.gui.canvas.renderer.trajectory_path_renderer import TrajectoryPathRenderer
+from scaraemu.infrastructure.gui.canvas.renderer.trail_renderer import TrailRenderer
+from scaraemu.infrastructure.gui.canvas.renderer.workspace_boundary_renderer import WorkspaceBoundaryRenderer
+from scaraemu.infrastructure.gui.canvas.target.itarget_click_listener import ITargetClickListener
 from scaraemu.infrastructure.gui.theme.theme import ThemeManager
-from scaraemu.infrastructure.gui.canvas.trail_renderer import TrailRenderer
-from scaraemu.infrastructure.gui.canvas.workspace_boundary_renderer import (
-    WorkspaceBoundaryRenderer,
-)
+from scaraemu.infrastructure.scaralang.kinematics.linkage.iadapter import ILinkageAdapter
+from scaraemu.infrastructure.scaralang.reach.iadapter import IWorkspaceReachAdapter
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -53,61 +61,74 @@ class CanvasXY(Canvas):
         It defines:
 
             :attributes:
-                | _geometry - Active ScaraGeometry model.
-                | _viewport - CanvasViewport coordinate and scaling manager.
-                | _on_target_click - Callback for interactive coordinate targeting.
+                | _bounds - Kinematic limits and workspace bounds.
+                | _viewport - Viewport metrics and scale provider.
+                | _transformer - Coordinate transformation projector.
+                | _target_click_listener - Listener for interactive coordinate targeting.
             :methods:
                 | __init__ - Initializes canvas and registers coordinate mapping event handlers.
-                | set_on_target_click - Registers target coordinate click callback.
+                | on_resize - Adjusts scale and center point on widget resize.
+                | on_mouse_click - Translates mouse interaction to world coordinates and triggers listener.
                 | redraw - Renders links, joints, path trail, and workspace boundaries.
                 | flash_unreachable - Renders temporary unreachable indicator at coordinates.
+                | get_dimensions - Returns current canvas width and height in pixels.
     '''
 
-    _geometry: Final[ScaraGeometry]
-    _viewport: Final[CanvasViewport]
-    _on_target_click: Callable[[float, float], None] | None
+    _bounds: ScaraBounds
+    _viewport: Viewport
+    _transformer: ICoordinateTransformer
+    _target_click_listener: ITargetClickListener
+    _manipulator_linkage_adapter: ILinkageAdapter
+    _reach_adapter: IWorkspaceReachAdapter
+    _boundary_service: IWorkspaceBoundaryService
 
     def __init__(
         self,
         parent: Widget,
-        geometry: ScaraGeometry,
-        width: int = 480,
-        height: int = 480
+        *,
+        config: CanvasConfig,
+        manipulator_linkage_adapter: ILinkageAdapter,
+        reach_adapter: IWorkspaceReachAdapter,
+        boundary_service: IWorkspaceBoundaryService,
     ) -> None:
         '''
             Initializes canvas and registers coordinate mapping event handlers.
 
             :param parent: Parent Tkinter widget.
-            :param geometry: SCARA physical link lengths.
-            :param width: Canvas pixel width.
-            :param height: Canvas pixel height.
+            :param config: Canvas configuration parameters bundle.
+            :param manipulator_linkage_adapter: Injected ILinkageAdapter instance.
+            :param reach_adapter: Injected IWorkspaceReachAdapter instance.
+            :param boundary_service: Injected IWorkspaceBoundaryService instance.
             :exceptions: None.
         '''
         super().__init__(
             parent,
-            width=width,
-            height=height,
+            width=config.width,
+            height=config.height,
             bg=ThemeManager.BG_CANVAS,
             highlightthickness=1,
-            highlightbackground=ThemeManager.BORDER_COLOR
+            highlightbackground=ThemeManager.BORDER_COLOR,
         )
-        self._geometry = geometry
-        self._viewport = CanvasViewport(geometry=geometry, width=width, height=height)
-        self._on_target_click = None
+        self._bounds: Final[ScaraBounds] = config.bounds
+        self._viewport: Final[Viewport] = Viewport(
+            dimensions=config.bounds.links, width=config.width, height=config.height
+        )
+        self._transformer: Final[ICoordinateTransformer] = CoordinateTransformer(
+            self._viewport
+        )
+        self._target_click_listener: Final[ITargetClickListener] = (
+            config.target_click_listener
+        )
+        self._manipulator_linkage_adapter: Final[ILinkageAdapter] = (
+            manipulator_linkage_adapter
+        )
+        self._reach_adapter: Final[IWorkspaceReachAdapter] = reach_adapter
+        self._boundary_service: Final[IWorkspaceBoundaryService] = boundary_service
 
-        self.bind('<Configure>', self._on_resize)
-        self.bind('<Button-1>', self._handle_mouse)
+        self.bind('<Configure>', self.on_resize)
+        self.bind('<Button-1>', self.on_mouse_click)
 
-    def set_on_target_click(self, callback: Callable[[float, float], None]) -> None:
-        '''
-            Registers click/drag callback for commanding XY coordinates.
-
-            :param callback: Callback receiving (x, y) coordinates in mm.
-            :exceptions: None.
-        '''
-        self._on_target_click = callback
-
-    def _on_resize(self, event: Event) -> None:
+    def on_resize(self, event: Event) -> None:
         '''
             Adjusts scale and center point on widget resize.
 
@@ -116,23 +137,25 @@ class CanvasXY(Canvas):
         '''
         self._viewport.update_size(event.width, event.height)
 
-    def _handle_mouse(self, event: Event) -> None:
+    def on_mouse_click(self, event: Event) -> None:
         '''
-            Translates mouse interaction to world coordinates and triggers callback.
+            Translates mouse interaction to world coordinates and triggers listener.
 
             :param event: Tkinter mouse event.
             :exceptions: None.
         '''
-        if self._on_target_click is not None:
-            wx, wy = self._viewport.screen_to_world(float(event.x), float(event.y))
-            self._on_target_click(wx, wy)
+        wx, wy = self._transformer.screen_to_world(float(event.x), float(event.y))
+
+        if not self._target_click_listener.handle_xy_click(wx, wy):
+            self.flash_unreachable(wx, wy)
 
     def redraw(
         self,
         pose: ScaraPose,
         joints: ScaraJoints,
         trail_points: Sequence[tuple[float, float]],
-        current_target: ScaraPose | None = None
+        current_target: ScaraPose,
+        planned_path: Sequence[tuple[float, float]] = (),
     ) -> None:
         '''
             Renders robot links, reach boundaries, and path trail.
@@ -140,21 +163,42 @@ class CanvasXY(Canvas):
             :param pose: Current Cartesian pose.
             :param joints: Current articulated joint angles.
             :param trail_points: Sequence of historical trail points.
-            :param current_target: Optional active target pose.
+            :param current_target: Active target pose.
+            :param planned_path: Sequence of planned trajectory (x, y) coordinates.
             :exceptions: None.
         '''
         self.delete('all')
-        WorkspaceBoundaryRenderer.render(self, self._geometry, self._viewport)
-        TrailRenderer.render(self, self._viewport, trail_points, current_target)
-        RobotArmRenderer.render(self, self._geometry, self._viewport, pose, joints)
+        WorkspaceBoundaryRenderer.render(
+            self,
+            self._bounds,
+            self._viewport,
+            self._transformer,
+            self._reach_adapter,
+            self._boundary_service,
+        )
+        TrajectoryPathRenderer.render(
+            self, self._transformer, planned_path
+        )
+        TrailRenderer.render(
+            self, self._transformer, trail_points, current_target
+        )
+        context = ManipulatorRenderContext(
+            transformer=self._transformer,
+            manipulator_linkage_adapter=self._manipulator_linkage_adapter,
+        )
+        ManipulatorArmRenderer.render(
+            self, context, pose, joints
+        )
 
-        r_dead: float = WorkspaceBoundaryRenderer.calculate_dead_zone_radius(self._geometry)
+        r_dead: float = self._reach_adapter.get_safe_r_min()
+        safe_r_max: float = self._reach_adapter.get_safe_r_max()
         self.create_text(
-            10, 15,
+            10,
+            15,
             anchor='w',
-            text=f'XY TOP VIEW  |  Reach: {r_dead:.0f} - {self._geometry.safe_r_max:.0f} mm',
+            text=f'XY TOP VIEW  |  Reach: {r_dead:.0f} - {safe_r_max:.0f} mm',
             fill=ThemeManager.TEXT_SECONDARY,
-            font=(ThemeManager.FONT_FAMILY, 9, 'bold')
+            font=(ThemeManager.FONT_FAMILY, 9, 'bold'),
         )
 
     def flash_unreachable(self, x: float, y: float) -> None:
@@ -165,24 +209,42 @@ class CanvasXY(Canvas):
             :param y: Target Y in mm.
             :exceptions: None.
         '''
-        sx, sy = self._viewport.world_to_screen(x, y)
+        sx, sy = self._transformer.world_to_screen(x, y)
         tag: str = f'unreachable_{id(self)}'
         self.create_oval(
-            sx - 8, sy - 8, sx + 8, sy + 8,
+            sx - 8,
+            sy - 8,
+            sx + 8,
+            sy + 8,
             outline=ThemeManager.ACCENT_RED,
             width=2,
-            tags=tag
+            tags=tag,
         )
         self.create_line(
-            sx - 6, sy - 6, sx + 6, sy + 6,
+            sx - 6,
+            sy - 6,
+            sx + 6,
+            sy + 6,
             fill=ThemeManager.ACCENT_RED,
             width=2,
-            tags=tag
+            tags=tag,
         )
         self.create_line(
-            sx - 6, sy + 6, sx + 6, sy - 6,
+            sx - 6,
+            sy + 6,
+            sx + 6,
+            sy - 6,
             fill=ThemeManager.ACCENT_RED,
             width=2,
-            tags=tag
+            tags=tag,
         )
         self.after(600, lambda: self.delete(tag))
+
+    def get_dimensions(self) -> tuple[float, float]:
+        '''
+            Returns current canvas width and height in pixels.
+
+            :return: Tuple of width and height in pixels.
+            :exceptions: None.
+        '''
+        return self._viewport.get_dimensions()

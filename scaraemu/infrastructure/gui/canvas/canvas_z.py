@@ -21,12 +21,17 @@ Info
 
 from __future__ import annotations
 
-from math import hypot
-from tkinter import Canvas, Event, LAST, ROUND, Widget
-from typing import Callable, Final
+from tkinter import Canvas, Event, Widget
+from typing import Final
 
-from scaraemu.core.model.kinematics.scara_geometry import ScaraGeometry
-from scaraemu.core.model.kinematics.scara_pose import ScaraPose
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
+
+from scaraemu.core.model.kinematics.pose import ScaraPose
+from scaraemu.infrastructure.gui.canvas.config import CanvasConfig
+from scaraemu.infrastructure.gui.canvas.renderer.z_render_context import ZRenderContext
+from scaraemu.infrastructure.gui.canvas.viewport.z_coordinate_mapper import ZCoordinateMapper
+from scaraemu.infrastructure.gui.canvas.renderer.z_renderer import ZRenderer
+from scaraemu.infrastructure.gui.canvas.target.itarget_click_listener import ITargetClickListener
 from scaraemu.infrastructure.gui.theme.theme import ThemeManager
 
 __author__ = 'Vladimir Roncevic'
@@ -46,63 +51,58 @@ class CanvasZ(Canvas):
         It defines:
 
             :attributes:
-                | _geometry - Active ScaraGeometry model.
+                | _bounds - Kinematic limits and workspace bounds.
+                | _coordinate_mapper - Z coordinate to pixel translator.
+                | _target_click_listener - Target height click listener.
                 | _width_px - Canvas pixel width.
                 | _height_px - Canvas pixel height.
-                | _on_target_click - Callback for interactive vertical height targeting.
             :methods:
                 | __init__ - Initializes canvas and registers event handlers.
-                | set_on_target_click - Registers target Z height click callback.
+                | on_resize - Updates canvas dimensions on widget resize.
+                | on_mouse_click - Translates mouse interaction to Z coordinate and triggers listener.
                 | redraw - Renders tower, carriage, elevation, and radial arm projection.
+                | clear - Clears all graphical elements from the canvas.
+                | get_dimensions - Returns current canvas width and height in pixels.
     '''
 
-    _geometry: Final[ScaraGeometry]
+    _bounds: ScaraBounds
+    _coordinate_mapper: ZCoordinateMapper
+    _target_click_listener: ITargetClickListener
     _width_px: float
     _height_px: float
-    _on_target_click: Callable[[float], None] | None
 
     def __init__(
         self,
         parent: Widget,
-        geometry: ScaraGeometry,
-        width: int = 480,
-        height: int = 240
+        config: CanvasConfig,
     ) -> None:
         '''
             Initializes vertical Z canvas.
 
             :param parent: Parent Tkinter widget.
-            :param geometry: SCARA physical link lengths.
-            :param width: Canvas pixel width.
-            :param height: Canvas pixel height.
+            :param config: Canvas configuration parameters bundle.
             :exceptions: None.
         '''
         super().__init__(
             parent,
-            width=width,
-            height=height,
+            width=config.width,
+            height=config.height,
             bg=ThemeManager.BG_CANVAS,
             highlightthickness=1,
-            highlightbackground=ThemeManager.BORDER_COLOR
+            highlightbackground=ThemeManager.BORDER_COLOR,
         )
-        self._geometry = geometry
-        self._width_px = float(width)
-        self._height_px = float(height)
-        self._on_target_click = None
+        self._bounds: Final[ScaraBounds] = config.bounds
+        self._coordinate_mapper: Final[ZCoordinateMapper] = ZCoordinateMapper(
+            config.bounds.vertical
+        )
+        self._target_click_listener = config.target_click_listener
+        self._width_px = float(config.width)
+        self._height_px = float(config.height)
 
-        self.bind('<Configure>', self._on_resize)
-        self.bind('<Button-1>', self._handle_mouse)
+        self.bind('<Configure>', self.on_resize)
+        self.bind('<Button-1>', self.on_mouse_click)
 
-    def set_on_target_click(self, callback: Callable[[float], None]) -> None:
-        '''
-            Registers click/drag callback for commanding Z coordinate.
-
-            :param callback: Callback receiving target Z height in mm.
-            :exceptions: None.
-        '''
-        self._on_target_click = callback
-
-    def _on_resize(self, event: Event) -> None:
+    def on_resize(self, event: Event) -> None:
         '''
             Updates canvas dimensions on widget resize.
 
@@ -113,96 +113,57 @@ class CanvasZ(Canvas):
             self._width_px = float(event.width)
             self._height_px = float(event.height)
 
-    def _z_to_screen_y(self, z: float, bottom_y: float, top_y: float) -> float:
+    def on_mouse_click(self, event: Event) -> None:
         '''
-            Maps vertical Z in mm to canvas screen Y in pixels.
-
-            :param z: Z elevation in mm.
-            :param bottom_y: Bottom pixel coordinate (Z=0).
-            :param top_y: Top pixel coordinate (Z=Zmax).
-            :return: Screen Y coordinate.
-            :exceptions: None.
-        '''
-        z_clamped: float = max(self._geometry.z_min, min(self._geometry.z_max, z))
-        span_z: float = max(1.0, self._geometry.z_max - self._geometry.z_min)
-        ratio: float = (z_clamped - self._geometry.z_min) / span_z
-        return bottom_y - ratio * (bottom_y - top_y)
-
-    def _screen_y_to_z(self, sy: float, bottom_y: float, top_y: float) -> float:
-        '''
-            Maps screen Y pixel coordinate back to vertical Z in mm.
-
-            :param sy: Screen Y coordinate in pixels.
-            :param bottom_y: Bottom pixel coordinate (Z=0).
-            :param top_y: Top pixel coordinate (Z=Zmax).
-            :return: Clamped Z elevation in mm.
-            :exceptions: None.
-        '''
-        ratio: float = (bottom_y - sy) / max(1.0, bottom_y - top_y)
-        z: float = self._geometry.z_min + ratio * (self._geometry.z_max - self._geometry.z_min)
-        return max(self._geometry.z_min, min(self._geometry.z_max, z))
-
-    def _handle_mouse(self, event: Event) -> None:
-        '''
-            Translates mouse interaction to Z coordinate and triggers callback.
+            Translates mouse interaction to Z coordinate and triggers listener.
 
             :param event: Tkinter mouse event.
             :exceptions: None.
         '''
-        if self._on_target_click is not None:
-            bottom_y: float = self._height_px - 40.0
-            top_y: float = 40.0
-            z_target: float = self._screen_y_to_z(float(event.y), bottom_y, top_y)
-            self._on_target_click(z_target)
+        bottom_y: float = self._height_px - 40.0
+        top_y: float = 40.0
+        z_target: float = self._coordinate_mapper.screen_y_to_z(
+            float(event.y), bottom_y, top_y
+        )
+        self._target_click_listener.handle_z_click(z_target)
 
-    def redraw(self, pose: ScaraPose, current_target: ScaraPose | None = None) -> None:
+    def redraw(
+        self, pose: ScaraPose, current_target: ScaraPose
+    ) -> None:
         '''
             Renders tower, carriage, elevation, and radial arm projection.
 
             :param pose: Current Cartesian pose.
-            :param current_target: Optional active target pose.
+            :param current_target: Active target pose.
+            :exceptions: None.
+        '''
+        self.delete('all')
+        context = ZRenderContext(
+            bounds=self._bounds,
+            coordinate_mapper=self._coordinate_mapper,
+            width_px=self._width_px,
+            height_px=self._height_px,
+        )
+        ZRenderer.render(
+            canvas=self,
+            context=context,
+            pose=pose,
+            current_target=current_target,
+        )
+
+    def clear(self) -> None:
+        '''
+            Clears all graphical elements from the canvas.
+
             :exceptions: None.
         '''
         self.delete('all')
 
-        bottom_y: float = self._height_px - 40.0
-        top_y: float = 40.0
-        tower_x: float = 80.0
+    def get_dimensions(self) -> tuple[float, float]:
+        '''
+            Returns current canvas width and height in pixels.
 
-        self.create_line(tower_x - 15, bottom_y + 10, tower_x + 15, bottom_y + 10, fill=ThemeManager.BORDER_COLOR, width=4)
-        self.create_line(tower_x - 8, top_y, tower_x - 8, bottom_y, fill='#45475a', width=3)
-        self.create_line(tower_x + 8, top_y, tower_x + 8, bottom_y, fill='#45475a', width=3)
-        self.create_line(tower_x, top_y, tower_x, bottom_y, fill=ThemeManager.ACCENT_CYAN, width=2, dash=(2, 2))
-
-        curr_y: float = self._z_to_screen_y(pose.z, bottom_y, top_y)
-
-        if current_target is not None:
-            tgt_y: float = self._z_to_screen_y(current_target.z, bottom_y, top_y)
-            self.create_line(tower_x - 25, tgt_y, self._width_px - 20, tgt_y, fill=ThemeManager.ACCENT_ORANGE, width=1, dash=(3, 3))
-
-        c_w: float = 28.0
-        c_h: float = 14.0
-        self.create_rectangle(
-            tower_x - c_w / 2, curr_y - c_h / 2,
-            tower_x + c_w / 2, curr_y + c_h / 2,
-            fill=ThemeManager.ACCENT_BLUE,
-            outline=ThemeManager.TEXT_PRIMARY,
-            width=2
-        )
-
-        r_current: float = hypot(pose.x, pose.y)
-        max_reach: float = max(1.0, self._geometry.r_max)
-        arm_px: float = (r_current / max_reach) * max(20.0, self._width_px - tower_x - 60.0)
-        arm_end_x: float = tower_x + arm_px
-
-        self.create_line(tower_x + c_w / 2, curr_y, arm_end_x, curr_y, fill=ThemeManager.ACCENT_CYAN, width=5, capstyle=ROUND)
-        self.create_line(arm_end_x, curr_y, arm_end_x, curr_y + 20, fill=ThemeManager.ACCENT_GREEN, width=3, arrow=LAST)
-        self.create_oval(arm_end_x - 4, curr_y - 4, arm_end_x + 4, curr_y + 4, fill=ThemeManager.ACCENT_YELLOW)
-
-        self.create_text(
-            10, 15,
-            anchor='w',
-            text=f'Z SIDE VIEW  |  Height: {pose.z:.1f} mm  |  Radius: {r_current:.1f} mm',
-            fill=ThemeManager.TEXT_SECONDARY,
-            font=(ThemeManager.FONT_FAMILY, 9, 'bold')
-        )
+            :return: Tuple of width and height in pixels.
+            :exceptions: None.
+        '''
+        return (self._width_px, self._height_px)

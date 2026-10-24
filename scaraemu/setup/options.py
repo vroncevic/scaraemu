@@ -33,7 +33,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class SCARAEmuBundleOptions(TypedDict, total=False):
+class SCARAEmuBundleOptions(TypedDict):
     '''
         SCARAEmu bundle options specification.
 

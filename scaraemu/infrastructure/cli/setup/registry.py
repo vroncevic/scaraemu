@@ -22,10 +22,10 @@ Info
 from __future__ import annotations
 
 from collections.abc import Sequence
+
 from ats_utilities.option.imanager import IOptionManager
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.command.command import CommandBundle
+from scaraemu.infrastructure.command.bundle import CommandBundle
 from scaraemu.infrastructure.cli.setup.bundle import CLIBundle
 from scaraemu.infrastructure.cli.setup.validator import CLIBundleValidator
 from scaraemu.infrastructure.cli.setup.keys import CLIBundleKeys
@@ -62,17 +62,14 @@ class CLIBundleRegistry:
             :return: The CLI bundle.
             :exceptions:
                 | ATSValueError: The dependencies or bundle must be provided and valid.
-                | ATSTypeError: The dependencies or bundle attributes must match types.
+                | ATSTypeError:  The dependencies or bundle attributes must match types.
         '''
         CLIBundleDependenciesValidator.validate(dependencies)
 
-        service: IService | None = dependencies.get(CLIBundleKeys.DEPENDENCY_SERVICE) if dependencies else None
-        parser: IOptionManager | None = dependencies.get(CLIBundleKeys.DEPENDENCY_PARSER) if dependencies else None
-        commands: Sequence[CommandBundle] | None = (
-            dependencies.get(CLIBundleKeys.DEPENDENCY_COMMANDS) if dependencies else None
-        )
+        parser: IOptionManager = dependencies[CLIBundleKeys.DEPENDENCY_PARSER]
+        commands: Sequence[CommandBundle] = dependencies[CLIBundleKeys.DEPENDENCY_COMMANDS]
 
-        bundle: CLIBundle = CLIBundle(service=service, parser=parser, commands=commands)
+        bundle: CLIBundle = CLIBundle(parser=parser, commands=commands)
         CLIBundleValidator.validate(bundle)
 
         return bundle

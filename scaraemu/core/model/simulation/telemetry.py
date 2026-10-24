@@ -23,9 +23,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from scaraemu.core.model.kinematics.scara_pose import ScaraPose
-from scaraemu.core.model.kinematics.scara_joints import ScaraJoints
-from scaraemu.core.model.kinematics.scara_step_coords import ScaraStepCoords
+from scaraemu.core.model.kinematics.joints import ScaraJoints
+from scaraemu.core.model.kinematics.pose import ScaraPose
+from scaraemu.core.model.kinematics.step_coords import ScaraStepCoords
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -37,7 +37,7 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Telemetry:
     '''
         Snapshot of full kinematic, Cartesian, and step telemetry data.
@@ -58,8 +58,8 @@ class Telemetry:
     pose: ScaraPose
     joints: ScaraJoints
     steps: ScaraStepCoords
-    is_hardware_connected: bool = False
-    motors_enabled: bool = True
-    estop_active: bool = False
-    hold_active: bool = False
-    elbow_left: bool = False
+    is_hardware_connected: bool
+    motors_enabled: bool
+    estop_active: bool
+    hold_active: bool
+    elbow_left: bool

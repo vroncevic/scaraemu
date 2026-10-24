@@ -88,5 +88,6 @@ class SCARAEmuBundleDependenciesValidator:
         try:
             cls.validate(dependencies)
             return True
+
         except (ATSValueError, ATSTypeError):
             return False

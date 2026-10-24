@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
 
 '''
-Package
-    bridge
+Module
+    __init__.py
 Copyright
     Copyright (C) 2026 Vladimir Roncevic <elektron.ronca@gmail.com>
     scaraemu is free software: you can redistribute it and/or modify it
@@ -16,7 +16,7 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    Hardware bridge controller package for bidirectional serial/TCP synchronization.
+    Initializes GUI hardware bridge synchronization package.
 '''
 
 from __future__ import annotations

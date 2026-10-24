@@ -26,8 +26,7 @@ from typing import TypedDict
 
 from ats_utilities.option.imanager import IOptionManager
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.command.command import CommandBundle
+from scaraemu.infrastructure.command.bundle import CommandBundle
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -39,18 +38,16 @@ __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class CLIBundleDependencies(TypedDict, total=False):
+class CLIBundleDependencies(TypedDict):
     '''
         CLI bundle dependencies specification.
 
         It defines:
 
             :attributes:
-                | service - The service interface instance.
                 | parser - The option parser interface instance.
                 | commands - Sequence of registered command bundles.
     '''
 
-    service: IService
     parser: IOptionManager
     commands: Sequence[CommandBundle]

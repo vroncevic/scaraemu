@@ -22,6 +22,7 @@ Info
 from __future__ import annotations
 
 from collections.abc import Mapping
+
 from ats_utilities.exceptions import ATSValueError, ATSTypeError
 from ats_utilities.validation.check_type import istype
 from ats_utilities.validation.check_value import not_none
@@ -58,7 +59,7 @@ class CLIBundleOptionsValidator:
             :param options: The CLI bundle options to be validated.
             :exceptions:
                 | ATSValueError: The CLI bundle options must be provided.
-                | ATSTypeError: The CLI bundle options must be a Mapping.
+                | ATSTypeError: The CLI bundle options must be a Mapping and match expected types.
         '''
         ctx: str = 'cli_bundle_options_validator::validate(...)'
         msg_options_none: str = 'the CLI bundle options must be provided'
@@ -68,10 +69,13 @@ class CLIBundleOptionsValidator:
         istype(options, Mapping, ctx, msg_options_istype)
 
         for attr_name, expected_type in CLIBundleKeys.get_option_to_type().items():
-            if attr_name in options:
-                msg_attr_istype: str = f'the {attr_name.replace("_", " ")} must be an instance of {expected_type.__name__}'
-                attribute = options.get(attr_name)
-                istype(attribute, expected_type, ctx, msg_attr_istype)
+            msg_attr_none: str = f'the {attr_name.replace("_", " ")} must be provided'
+            msg_attr_istype: str = f'the {attr_name.replace("_", " ")} must be an instance of {expected_type.__name__}'
+
+            attribute = options.get(attr_name)
+
+            not_none(attribute, ctx, msg_attr_none)
+            istype(attribute, expected_type, ctx, msg_attr_istype)
 
     @classmethod
     def is_valid(cls, options: CLIBundleOptions) -> bool:
@@ -85,5 +89,6 @@ class CLIBundleOptionsValidator:
         try:
             cls.validate(options)
             return True
+
         except (ATSValueError, ATSTypeError):
             return False

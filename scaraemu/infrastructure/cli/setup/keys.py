@@ -27,7 +27,6 @@ from types import MappingProxyType
 
 from ats_utilities.option.imanager import IOptionManager
 
-from scaraemu.core.service.iservice import IService
 from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
@@ -47,24 +46,20 @@ class CLIBundleKeys:
         It defines:
 
             :attributes:
-                | DEPENDENCY_SERVICE - The service interface constant of the CLI bundle.
                 | DEPENDENCY_PARSER - The parser interface constant of the CLI bundle.
                 | DEPENDENCY_COMMANDS - The commands constant of the CLI bundle.
-                | OPTION_SERVICE - The service option constant of the CLI bundle.
                 | OPTION_PARSER - The parser option constant of the CLI bundle.
-                | OPTION_GUI - The GUI option constant of the CLI bundle.
+                | OPTION_LAUNCHER - The launcher option constant of the CLI bundle.
             :methods:
                 | get_dependency_to_type - Returns mapping of CLI dependencies to types.
                 | get_option_to_type - Returns mapping of CLI options to types.
     '''
 
-    DEPENDENCY_SERVICE: ClassVar[str] = 'service'
     DEPENDENCY_PARSER: ClassVar[str] = 'parser'
     DEPENDENCY_COMMANDS: ClassVar[str] = 'commands'
 
-    OPTION_SERVICE: ClassVar[str] = 'service'
     OPTION_PARSER: ClassVar[str] = 'parser'
-    OPTION_GUI: ClassVar[str] = 'gui'
+    OPTION_LAUNCHER: ClassVar[str] = 'launcher'
 
     @classmethod
     def get_dependency_to_type(cls) -> MappingProxyType[str, type]:
@@ -75,7 +70,6 @@ class CLIBundleKeys:
             :exceptions: None.
         '''
         return MappingProxyType({
-            cls.DEPENDENCY_SERVICE: IService,
             cls.DEPENDENCY_PARSER: IOptionManager,
             cls.DEPENDENCY_COMMANDS: Sequence,
         })
@@ -89,7 +83,6 @@ class CLIBundleKeys:
             :exceptions: None.
         '''
         return MappingProxyType({
-            cls.OPTION_SERVICE: IService,
             cls.OPTION_PARSER: IOptionManager,
-            cls.OPTION_GUI: IGUI,
+            cls.OPTION_LAUNCHER: IGUI,
         })

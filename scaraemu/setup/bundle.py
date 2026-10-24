@@ -24,12 +24,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ats_utilities.base.setup.bundle import BaseBundle
-from ats_utilities.utils.reflection import instance_to_dict
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
+
+from scaraemu.core.service.emulation.iservice import IEmulationService
+from scaraemu.core.service.kinematics.imanipulator import IManipulatorKinematics
 from scaraemu.infrastructure.cli.icli import ICLI
+from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
@@ -50,25 +51,16 @@ class SCARAEmuBundle:
 
             :attributes:
                 | base - Base ATS bundle with logger, options, and info managers.
-                | service - Core kinematics and emulator simulation service.
+                | bounds - ScaraBounds kinematics boundary model.
+                | kinematics - IManipulatorKinematics kinematics solver.
+                | emulation_service - IEmulationService digital twin emulation service.
                 | gui - GUI presentation adapter.
-                | transport - Hardware communication transport.
                 | cli - Command-line interface adapter.
-            :methods:
-                | to_dict - Converts the bundle to a dictionary.
     '''
 
     base: BaseBundle
-    service: IService
+    bounds: ScaraBounds
+    kinematics: IManipulatorKinematics
+    emulation_service: IEmulationService
     gui: IGUI
-    transport: ITransport
     cli: ICLI
-
-    def to_dict(self) -> dict[str, object]:
-        '''
-            Converts the bundle to a dictionary representation.
-
-            :return: Dictionary representation of the bundle.
-            :exceptions: None.
-        '''
-        return instance_to_dict(self)
