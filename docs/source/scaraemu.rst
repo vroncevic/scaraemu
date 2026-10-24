@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    scaraemu.core
+   scaraemu.infrastructure
    scaraemu.setup
 
 Submodules

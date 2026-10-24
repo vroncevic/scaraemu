@@ -27,7 +27,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -42,7 +42,9 @@ class IGUI(Protocol):
 
             :methods:
                 | is_initialized - Returns initialization status.
+                | load_file - Sets initial plan or DSL script to load upon GUI startup.
                 | run - Starts the Tkinter main event loop.
+                | get_version - Returns GUI interface version string.
     '''
 
     def is_initialized(self) -> bool:
@@ -50,14 +52,23 @@ class IGUI(Protocol):
             Returns initialization status.
 
             :return: True if GUI is initialized, False otherwise.
-            :exceptions: None.
         '''
-        ...
+
+    def load_file(self, file_path: str) -> None:
+        '''
+            Sets initial plan or DSL script to load upon GUI startup.
+
+            :param file_path: Path to script or plan file.
+        '''
 
     def run(self) -> None:
         '''
             Starts the Tkinter main event loop.
-
-            :exceptions: None.
         '''
-        ...
+
+    def get_version(self) -> str:
+        '''
+            Returns GUI interface version string.
+
+            :return: Semantic version string.
+        '''

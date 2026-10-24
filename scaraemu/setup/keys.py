@@ -25,17 +25,18 @@ from typing import ClassVar
 from types import MappingProxyType
 
 from ats_utilities.base.setup.bundle import BaseBundle
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
+from scaraemu.core.service.emulation.iservice import IEmulationService
+from scaraemu.core.service.kinematics.imanipulator import IManipulatorKinematics
 from scaraemu.infrastructure.cli.icli import ICLI
+from scaraemu.infrastructure.gui.igui import IGUI
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -49,9 +50,10 @@ class SCARAEmuBundleKeys:
 
             :attributes:
                 | DEPENDENCY_BASE - Base bundle key.
-                | DEPENDENCY_SERVICE - Service key.
+                | DEPENDENCY_BOUNDS - Kinematic bounds key.
+                | DEPENDENCY_KINEMATICS - Kinematics solver key.
+                | DEPENDENCY_EMULATION_SERVICE - Digital twin emulation service key.
                 | DEPENDENCY_GUI - GUI adapter key.
-                | DEPENDENCY_TRANSPORT - Communication transport key.
                 | DEPENDENCY_CLI - CLI adapter key.
                 | OPTION_INFO_FILE - Info file configuration key.
                 | OPTION_ROBOT_CONFIG - Custom kinematics configuration file path key.
@@ -70,9 +72,10 @@ class SCARAEmuBundleKeys:
     '''
 
     DEPENDENCY_BASE: ClassVar[str] = 'base'
-    DEPENDENCY_SERVICE: ClassVar[str] = 'service'
+    DEPENDENCY_BOUNDS: ClassVar[str] = 'bounds'
+    DEPENDENCY_KINEMATICS: ClassVar[str] = 'kinematics'
+    DEPENDENCY_EMULATION_SERVICE: ClassVar[str] = 'emulation_service'
     DEPENDENCY_GUI: ClassVar[str] = 'gui'
-    DEPENDENCY_TRANSPORT: ClassVar[str] = 'transport'
     DEPENDENCY_CLI: ClassVar[str] = 'cli'
 
     OPTION_INFO_FILE: ClassVar[str] = 'info_file'
@@ -97,9 +100,10 @@ class SCARAEmuBundleKeys:
         '''
         return MappingProxyType({
             cls.DEPENDENCY_BASE: BaseBundle,
-            cls.DEPENDENCY_SERVICE: IService,
+            cls.DEPENDENCY_BOUNDS: ScaraBounds,
+            cls.DEPENDENCY_KINEMATICS: IManipulatorKinematics,
+            cls.DEPENDENCY_EMULATION_SERVICE: IEmulationService,
             cls.DEPENDENCY_GUI: IGUI,
-            cls.DEPENDENCY_TRANSPORT: ITransport,
             cls.DEPENDENCY_CLI: ICLI,
         })
 

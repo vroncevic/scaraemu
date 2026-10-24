@@ -25,16 +25,14 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from ats_utilities.option.imanager import IOptionManager
-from ats_utilities.utils.reflection import instance_to_dict
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.command.command import CommandBundle
+from scaraemu.infrastructure.command.bundle import CommandBundle
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -48,22 +46,9 @@ class CLIBundle:
         It defines:
 
             :attributes:
-                | service - Core kinematics and emulator simulation service.
                 | parser - Option manager for command line options.
                 | commands - Sequence of registered command bundles.
-            :methods:
-                | to_dict - Converts the bundle to a dictionary.
     '''
 
-    service: IService
     parser: IOptionManager
     commands: Sequence[CommandBundle]
-
-    def to_dict(self) -> dict[str, object]:
-        '''
-            Converts the bundle to a dictionary representation.
-
-            :return: Dictionary representation of the bundle.
-            :exceptions: None.
-        '''
-        return instance_to_dict(self)

@@ -37,7 +37,7 @@ __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -56,10 +56,11 @@ class SCARAEmu(Base):
             :methods:
                 | __init__ - Initializes the scaraemu engine with adapters and services.
                 | process - Processes the scaraemu commands.
+                | get_version - Gets the engine version.
     '''
 
     _is_initialized: bool
-    _logger: ILogger | None
+    _logger: ILogger
     _cli: ICLI
 
     def __init__(self, bundle: SCARAEmuBundle) -> None:
@@ -70,7 +71,6 @@ class SCARAEmu(Base):
             :exceptions: None.
         '''
         self._is_initialized = False
-        self._logger = None
 
         try:
             SCARAEmuBundleValidator.validate(bundle)
@@ -88,7 +88,6 @@ class SCARAEmu(Base):
             self._is_initialized = all(
                 component.is_initialized() for component in [
                     bundle.base.option_manager,
-                    bundle.service,
                     bundle.gui,
                     self._cli
                 ] if component
@@ -115,7 +114,7 @@ class SCARAEmu(Base):
         result: Mapping[str, object] = {}
 
         try:
-            if self.is_initialized() and self._logger is not None:
+            if self.is_initialized():
                 self._logger.write_log(INFO, '🔥 Starting execution command...')
                 result = self._cli.run()
                 self._logger.write_log(INFO, '✅ Execution finished!')
@@ -128,22 +127,22 @@ class SCARAEmu(Base):
                 self._logger.write_log(INFO, '✅ scaraemu: exiting successfully!')
                 return True
 
-            if self._logger is not None:
-                self._logger.write_log(ERROR, '❌ scaraemu: engine not initialized!')
-            else:
-                stdout.write('❌ scaraemu: engine not initialized!\n')
+            stdout.write('❌ scaraemu: engine not initialized!\n')
             return False
 
         except (ATSValueError, ATSTypeError) as exc:
-            if self._logger is not None:
-                self._logger.write_log(ERROR, f'❌ scaraemu: {exc}!')
-            else:
-                stdout.write(f'❌ scaraemu: {exc}!\n')
+            stdout.write(f'❌ scaraemu: {exc}!\n')
             return False
 
         except Exception as exc:
-            if self._logger is not None:
-                self._logger.write_log(ERROR, f'❌ scaraemu unexpected exception: {exc}!')
-            else:
-                stdout.write(f'❌ scaraemu unexpected exception: {exc}!\n')
+            stdout.write(f'❌ scaraemu unexpected exception: {exc}!\n')
             return False
+
+    def get_version(self) -> str:
+        '''
+            Gets the engine version.
+
+            :return: Version string.
+            :exceptions: None.
+        '''
+        return __version__

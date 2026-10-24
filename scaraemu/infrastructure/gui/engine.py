@@ -16,96 +16,91 @@ Copyright
     You should have received a copy of the GNU General Public License along
     with this program. If not, see <http://www.gnu.org/licenses/>.
 Info
-    GUI presentation adapter for SCARA Robot Emulator and 2D/3D Kinematic Visualizer.
+    Top-level GUI orchestration engine for SCARA robot emulator.
 '''
 
 from __future__ import annotations
 
-import tkinter as tk
-from tkinter import ttk
 from typing import Final
 
-from scaraemu.core.service.iservice import IService
-from scaraemu.core.model.scara_pose import ScaraPose
-from scaraemu.infrastructure.communication.transport.itransport import ITransport
-from scaraemu.infrastructure.gui.igui import IGUI
-from scaraemu.infrastructure.gui.theme import ThemeManager
-from scaraemu.infrastructure.gui.canvas_xy import CanvasXY
-from scaraemu.infrastructure.gui.canvas_z import CanvasZ
-from scaraemu.infrastructure.gui.components.serial_bar import SerialBar
-from scaraemu.infrastructure.gui.components.telemetry_panel import TelemetryPanel
-from scaraemu.infrastructure.gui.components.jog_panel import JogPanel
-from scaraemu.infrastructure.gui.components.trajectory_demo_panel import TrajectoryDemoPanel
-from scaraemu.infrastructure.gui.components.serial_console_panel import SerialConsolePanel
-from scaraemu.infrastructure.gui.hardware_bridge_controller import HardwareBridgeController
-from scaraemu.infrastructure.gui.gui_event_handler import GuiEventHandler
+from scaralang.core.model.kinematics.profile.bounds import ScaraBounds
+
+from scaraemu.infrastructure.gui.delegates.bundle import GuiDelegatesBundle
+from scaraemu.infrastructure.gui.layout.builder.ibuilder import ILayoutBuilder
+from scaraemu.infrastructure.gui.lifecycle.irunner import IGuiLifecycleRunner
+from scaraemu.infrastructure.gui.canvas.target.itarget_click_listener import ITargetClickListener
+from scaraemu.infrastructure.server.manager.imanager import IVirtualServerManager
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class ScaraEmuGUI(IGUI):
+class ScaraEmuGUI:
     '''
-        Top-level graphical user interface adapter for SCARA Emulator and Visualizer.
+        Top-level GUI orchestration engine for SCARA robot emulator.
 
         It defines:
 
             :attributes:
-                | _service - Kinematics and emulator simulation service facade.
-                | _bridge - Hardware communication bridge controller.
-                | _root - Root Tkinter window.
-                | _canvas_xy - Top-down planar canvas.
-                | _canvas_z - Side elevation canvas.
-                | _telemetry_panel - Telemetry readout monitor.
-                | _demo_panel - Autonomous trajectory demo panel.
+                | _bounds - Manipulator kinematic boundaries and link lengths.
+                | _target_click_listener - Injected canvas target click listener.
+                | _delegates - Injected GUI action delegates bundle.
+                | _server_manager - Virtual robot TCP server lifecycle manager.
+                | _startup_config - Startup configuration parameters.
+                | _layout_builder - UI widget layout builder.
+                | _lifecycle_runner - GUI execution lifecycle runner.
             :methods:
-                | __init__ - Initializes GUI adapter with service and transport dependencies.
+                | __init__ - Initializes GUI engine with injected collaborators.
                 | is_initialized - Returns initialization status.
-                | run - Constructs Tkinter windows and starts event loop.
+                | load_file - Sets initial plan or DSL script to load upon GUI startup.
+                | run - Triggers window and simulation execution lifecycle.
+                | get_version - Returns GUI engine version string.
     '''
 
-    _service: Final[IService]
-    _bridge: Final[HardwareBridgeController]
-    _root: tk.Tk | None
-    _serial_bar: SerialBar | None
-    _canvas_xy: CanvasXY | None
-    _canvas_z: CanvasZ | None
-    _telemetry_panel: TelemetryPanel | None
-    _demo_panel: TrajectoryDemoPanel | None
-    _console_panel: SerialConsolePanel | None
+    _bounds: ScaraBounds
+    _target_click_listener: ITargetClickListener
+    _delegates: GuiDelegatesBundle
+    _server_manager: IVirtualServerManager
+    _initial_script: str
+    _layout_builder: ILayoutBuilder
+    _lifecycle_runner: IGuiLifecycleRunner
 
     def __init__(
         self,
-        service: IService,
-        transport: ITransport
+        *,
+        bounds: ScaraBounds,
+        target_click_listener: ITargetClickListener,
+        delegates: GuiDelegatesBundle,
+        server_manager: IVirtualServerManager,
+        layout_builder: ILayoutBuilder,
+        lifecycle_runner: IGuiLifecycleRunner,
+        initial_script: str = '',
     ) -> None:
         '''
-            Initializes GUI adapter with service and transport dependencies.
+            Initializes GUI engine with injected services, delegates, and builder.
 
-            :param service: Simulation and kinematics facade.
-            :param transport: Communication transport instance.
+            :param bounds: Manipulator kinematic boundaries and link lengths.
+            :param target_click_listener: Injected canvas click listener.
+            :param delegates: Injected GUI action delegates bundle.
+            :param server_manager: Virtual robot TCP server manager.
+            :param layout_builder: UI widget layout builder.
+            :param lifecycle_runner: GUI execution lifecycle runner.
+            :param initial_script: Optional initial script path to execute.
             :exceptions: None.
         '''
-        self._service = service
-        self._bridge = HardwareBridgeController(
-            transport=transport,
-            on_state_change=self._on_bridge_state_change,
-            on_telemetry=self._on_hardware_telemetry,
-            on_elbow_change=self._on_hardware_elbow_change
-        )
-        self._root = None
-        self._serial_bar = None
-        self._canvas_xy = None
-        self._canvas_z = None
-        self._telemetry_panel = None
-        self._demo_panel = None
-        self._console_panel = None
+        self._bounds: Final[ScaraBounds] = bounds
+        self._target_click_listener: Final[ITargetClickListener] = target_click_listener
+        self._delegates: Final[GuiDelegatesBundle] = delegates
+        self._server_manager: Final[IVirtualServerManager] = server_manager
+        self._initial_script: Final[str] = initial_script
+        self._layout_builder: Final[ILayoutBuilder] = layout_builder
+        self._lifecycle_runner: Final[IGuiLifecycleRunner] = lifecycle_runner
 
     def is_initialized(self) -> bool:
         '''
@@ -114,7 +109,21 @@ class ScaraEmuGUI(IGUI):
             :return: True if GUI is initialized, False otherwise.
             :exceptions: None.
         '''
-        return bool(self._service and self._bridge)
+        return bool(
+            self._bounds
+            and self._delegates.preset
+            and self._delegates.script
+            and self._layout_builder
+        )
+
+    def load_file(self, file_path: str) -> None:
+        '''
+            Sets initial plan or DSL script to load upon GUI startup.
+
+            :param file_path: Path to script or plan file.
+            :exceptions: None.
+        '''
+        self._delegates.script.handle_load_script(file_path)
 
     def run(self) -> None:
         '''
@@ -122,180 +131,21 @@ class ScaraEmuGUI(IGUI):
 
             :exceptions: None.
         '''
-        self._root = tk.Tk()
-        self._root.title('SCARA Robot 4-DOF Emulator & Visualizer')
-        sw: int = self._root.winfo_screenwidth()
-        sh: int = self._root.winfo_screenheight()
-        self._root.geometry(f'{sw}x{sh}+0+0')
-        self._root.minsize(980, 680)
-        self._root.configure(bg=ThemeManager.BG_DARK)
+        if self._initial_script:
+            self._delegates.script.handle_load_script(self._initial_script)
 
-        self._serial_bar = SerialBar(self._root, on_connect_toggle=self._bridge.handle_connect_toggle)
-        self._serial_bar.pack(fill=tk.X)
-
-        main_paned = tk.PanedWindow(self._root, orient=tk.HORIZONTAL, bg=ThemeManager.BG_DARK, bd=0, sashwidth=4)
-        main_paned.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
-
-        left_col: tk.Frame = tk.Frame(main_paned, bg=ThemeManager.BG_DARK)
-        main_paned.add(left_col, stretch='always')
-
-        geom = self._service.get_kinematics().get_geometry()
-        self._canvas_xy = CanvasXY(left_col, geometry=geom)
-        self._canvas_xy.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
-
-        self._canvas_z = CanvasZ(left_col, geometry=geom, height=180)
-        self._canvas_z.pack(fill=tk.X)
-
-        event_handler = GuiEventHandler(
-            service=self._service,
-            bridge=self._bridge,
-            log_host=self._log_host,
-            flash_unreachable=lambda x, y: self._canvas_xy.flash_unreachable(x, y) if self._canvas_xy is not None else None
+        self._lifecycle_runner.run_lifecycle(
+            bounds=self._bounds,
+            target_click_listener=self._target_click_listener,
+            delegates=self._delegates,
+            layout_builder=self._layout_builder,
         )
 
-        self._canvas_xy.set_on_target_click(event_handler.handle_xy_click)
-        self._canvas_z.set_on_target_click(event_handler.handle_z_click)
-
-        right_col: tk.Frame = tk.Frame(main_paned, bg=ThemeManager.BG_DARK, width=390)
-        main_paned.add(right_col, stretch='never')
-
-        notebook = ttk.Notebook(right_col)
-        notebook.pack(fill=tk.BOTH, expand=True)
-
-        tab_control: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
-        tab_demo: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
-        tab_console: tk.Frame = tk.Frame(notebook, bg=ThemeManager.BG_DARK)
-
-        notebook.add(tab_control, text='  Monitor & Jog  ')
-        notebook.add(tab_demo, text='  Trajectories  ')
-        notebook.add(tab_console, text='  Serial Console  ')
-
-        self._telemetry_panel = TelemetryPanel(tab_control)
-        self._telemetry_panel.pack(fill=tk.X, pady=(0, 6))
-
-        def _toggle_hold() -> None:
-            emu = self._service.get_emulator()
-            held = not emu.get_telemetry().hold_active
-            emu.set_hold(held)
-            if held:
-                self._bridge.send_hardware_hold()
-            else:
-                self._bridge.send_hardware_resume()
-
-        jog_panel = JogPanel(
-            tab_control,
-            on_jog=event_handler.handle_jog,
-            on_home_xy=lambda: event_handler.handle_home('xy'),
-            on_home_z=lambda: event_handler.handle_home('z'),
-            on_toggle_elbow=event_handler.handle_toggle_elbow,
-            on_toggle_motors=event_handler.handle_toggle_motors,
-            on_toggle_hold=_toggle_hold,
-            on_estop=event_handler.handle_estop
-        )
-        jog_panel.pack(fill=tk.X)
-
-        self._demo_panel = TrajectoryDemoPanel(
-            tab_demo,
-            on_demo_select=event_handler.handle_demo_select,
-            on_clear_queue=lambda: (self._service.get_emulator().clear_queue(), self._bridge.clear_queue())
-        )
-        self._demo_panel.pack(fill=tk.X, pady=(0, 6))
-
-        self._console_panel = SerialConsolePanel(tab_console, on_send_cmd=self._bridge.handle_manual_send)
-        self._console_panel.pack(fill=tk.BOTH, expand=True)
-
-        self._bridge.set_log_listener(self._console_panel.append_log)
-
-        self._root.update_idletasks()
-        try:
-            self._root.attributes('-zoomed', True)
-        except tk.TclError:
-            try:
-                self._root.state('zoomed')
-            except tk.TclError:
-                pass
-
-        self._schedule_tick()
-        self._root.mainloop()
-
-    def _schedule_tick(self) -> None:
+    def get_version(self) -> str:
         '''
-            Schedules periodic animation and simulation tick.
+            Returns GUI engine component version string.
 
+            :return: Semantic version string.
             :exceptions: None.
         '''
-        if self._root is not None:
-            self._simulation_tick()
-            self._root.after(25, self._schedule_tick)
-
-    def _simulation_tick(self) -> None:
-        '''
-            Advances emulator simulation step and updates UI widgets.
-
-            :exceptions: None.
-        '''
-        emu = self._service.get_emulator()
-        emu.step_simulation()
-
-        telem = emu.get_telemetry()
-        sim_state = emu.get_simulation_state()
-
-        if self._canvas_xy is not None:
-            self._canvas_xy.redraw(
-                pose=telem.pose,
-                joints=telem.joints,
-                trail_points=sim_state.trail_points,
-                current_target=sim_state.current_target
-            )
-
-        if self._canvas_z is not None:
-            self._canvas_z.redraw(
-                pose=telem.pose,
-                current_target=sim_state.current_target
-            )
-
-        if self._telemetry_panel is not None:
-            self._telemetry_panel.update_telemetry(telem)
-
-        if self._demo_panel is not None:
-            self._demo_panel.update_queue_depth(sim_state.queue_depth)
-
-    def _log_host(self, msg: str, tag: str = 'err') -> None:
-        '''
-            Appends host diagnostic message to serial console.
-
-            :param msg: Message string.
-            :param tag: Color tag.
-            :exceptions: None.
-        '''
-        if self._console_panel is not None:
-            self._console_panel.append_log(msg, tag)
-    def _on_bridge_state_change(self, connected: bool) -> None:
-        '''
-            Updates emulator service connection status.
-
-            :param connected: Connection state.
-            :exceptions: None.
-        '''
-        self._service.get_emulator().set_hardware_connected(connected)
-        if self._serial_bar is not None:
-            self._serial_bar.set_connected_state(connected)
-
-    def _on_hardware_telemetry(self, pose: ScaraPose) -> None:
-        '''
-            Handles hardware telemetry pose update.
-
-            :param pose: ScaraPose from microcontroller.
-            :exceptions: None.
-        '''
-        self._service.get_emulator().update_hardware_pose(pose)
-
-    def _on_hardware_elbow_change(self, is_left: bool) -> None:
-        '''
-            Synchronizes local emulator elbow configuration from hardware.
-
-            :param is_left: True if Lefty, False if Righty.
-            :exceptions: None.
-        '''
-        self._service.get_emulator().set_elbow_mode(is_left)
-
+        return __version__

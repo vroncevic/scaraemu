@@ -25,12 +25,13 @@ from sys import exit as sys_exit
 
 from scaraemu.engine import SCARAEmu
 from scaraemu.setup.factory import SCARAEmuBundleFactory
+from scaraemu.setup.options import SCARAEmuBundleOptions
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
@@ -43,7 +44,9 @@ def main() -> bool:
         :return: True if successful, False otherwise.
         :exceptions: None.
     '''
-    scaraemu: SCARAEmu = SCARAEmu(SCARAEmuBundleFactory.create_bundle())
+    scaraemu: SCARAEmu = SCARAEmu(
+        SCARAEmuBundleFactory.create(SCARAEmuBundleOptions())
+    )
 
     return scaraemu.process()
 

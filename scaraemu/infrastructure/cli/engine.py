@@ -29,45 +29,41 @@ from ats_utilities.utils.reflection import to_str
 
 from scaraemu.infrastructure.cli.setup.bundle import CLIBundle
 from scaraemu.infrastructure.cli.setup.validator import CLIBundleValidator
-from scaraemu.infrastructure.cli.icli import ICLI
-from scaraemu.core.service.iservice import IService
-from scaraemu.infrastructure.command.icommand_definition import ICommandDefinition
-from scaraemu.infrastructure.command.icommand_executor import ICommandExecutor
+from scaraemu.infrastructure.command.idefinition import ICommandDefinition
+from scaraemu.infrastructure.command.iexecutor import ICommandExecutor
 
 __author__ = 'Vladimir Roncevic'
 __copyright__ = '(C) 2026, https://vroncevic.github.io/scaraemu'
 __credits__ = ['Vladimir Roncevic', 'Python Software Foundation']
 __license__ = 'https://github.com/vroncevic/scaraemu/blob/dev/LICENSE'
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 __maintainer__ = 'Vladimir Roncevic'
 __email__ = 'elektron.ronca@gmail.com'
 __status__ = 'Updated'
 
 
-class CLI(ICLI):
+class CLI:
     '''
         Adapter that implements CLI commands for the SCARA emulator and visualizer.
 
         It defines:
 
             :attributes:
-                | _service - Kinematics and emulator simulation service.
                 | _parser - Argument parser for parsing CLI command args.
                 | _executors - Map of command names to command executor instances.
             :methods:
-                | __init__ - Initializes the CLI with service, parser and commands list.
+                | __init__ - Initializes the CLI with parser and commands list.
                 | run - Parses command line arguments and runs selected command strategy.
                 | is_initialized - Checks if the CLI is initialized.
                 | __str__ - Returns the CLI as string representation.
     '''
 
-    _service: IService
     _parser: IOptionManager
-    _executors: Mapping[str, ICommandExecutor[ICommandDefinition, object, object, object]]
+    _executors: Mapping[str, ICommandExecutor[ICommandDefinition, object, object]]
 
     def __init__(self, bundle: CLIBundle) -> None:
         '''
-            Initializes the CLI with service, parser and commands list.
+            Initializes the CLI with parser and commands list.
 
             :param bundle: Bundle containing CLI adapters.
             :exceptions:
@@ -75,7 +71,6 @@ class CLI(ICLI):
                 | ATSTypeError: The CLI bundle must match types.
         '''
         CLIBundleValidator.validate(bundle)
-        self._service = bundle.service
         self._parser = bundle.parser
         self._executors = {pair.definition.name: pair.executor for pair in bundle.commands}
         self._parser.register_commands([pair.definition for pair in bundle.commands])
@@ -89,9 +84,9 @@ class CLI(ICLI):
         '''
         try:
             command_name, params = self._parser.parse_command()
-            executor: ICommandExecutor[ICommandDefinition, object, object, object] | None = self._executors.get(command_name)
+            executor: ICommandExecutor[ICommandDefinition, object, object] | None = self._executors.get(command_name)
 
-            return executor.execute(params=params, service=self._service) if executor else {
+            return executor.execute(params=params) if executor else {
                 'returncode': 1, 'stdout': '', 'stderr': 'cli::run - command not found'
             }
 
